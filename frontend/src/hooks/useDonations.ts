@@ -11,10 +11,14 @@ import {
 } from '../services/donations'
 import type { DonationInput, DonationStatus } from '../types/donations'
 
-export function useDonations(filters?: { status?: DonationStatus; donorId?: string; recipientId?: string }) {
+export function useDonations(
+  filters?: { status?: DonationStatus; donorId?: string; recipientId?: string },
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ['donations', filters],
     queryFn: () => listDonations(filters),
+    enabled: options?.enabled ?? true,
   })
 }
 

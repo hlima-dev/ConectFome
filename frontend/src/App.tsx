@@ -9,6 +9,11 @@ import { DonorsPage } from './pages/donors/DonorsPage'
 import { RecipientsPage } from './pages/recipients/RecipientsPage'
 import { DonationsPage } from './pages/donations/DonationsPage'
 import { DonationDetailPage } from './pages/donations/DonationDetailPage'
+import { VolunteersPage } from './pages/logistics/VolunteersPage'
+import { VehiclesPage } from './pages/logistics/VehiclesPage'
+import { PickupRoutesPage } from './pages/logistics/PickupRoutesPage'
+import { PickupRouteFormPage } from './pages/logistics/PickupRouteFormPage'
+import { PickupRouteDetailPage } from './pages/logistics/PickupRouteDetailPage'
 
 function App() {
   return (
@@ -43,6 +48,46 @@ function App() {
         />
         <Route path="doacoes" element={<DonationsPage />} />
         <Route path="doacoes/:id" element={<DonationDetailPage />} />
+        <Route
+          path="voluntarios"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <VolunteersPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="veiculos"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <VehiclesPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="rotas"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <PickupRoutesPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="rotas/nova"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <PickupRouteFormPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="rotas/:id"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <PickupRouteDetailPage />
+            </RoleRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
