@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
+import { HeartHandshake, LayoutDashboard, LogOut, Menu, Store, X } from 'lucide-react'
 import { getStoredUser, logout as logoutRequest } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
 import type { Role } from '../types/auth'
@@ -21,7 +21,16 @@ interface NavSection {
 // `roles`, o item aparece pra todo mundo). Cada fase de implementação
 // adiciona seus itens aqui conforme as telas ficam prontas — ver plano em
 // /root/.claude/plans/lovely-doodling-mochi.md.
-const navSections: NavSection[] = [{ title: null, items: [{ label: 'Painel', path: '/', icon: LayoutDashboard }] }]
+const navSections: NavSection[] = [
+  { title: null, items: [{ label: 'Painel', path: '/', icon: LayoutDashboard }] },
+  {
+    title: 'Cadastros',
+    items: [
+      { label: 'Doadores', path: '/doadores', icon: Store, roles: ['ADMIN'] },
+      { label: 'Receptores', path: '/receptores', icon: HeartHandshake, roles: ['ADMIN'] },
+    ],
+  },
+]
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
