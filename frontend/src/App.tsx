@@ -7,6 +7,8 @@ import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { DonorsPage } from './pages/donors/DonorsPage'
 import { RecipientsPage } from './pages/recipients/RecipientsPage'
+import { DonationsPage } from './pages/donations/DonationsPage'
+import { DonationDetailPage } from './pages/donations/DonationDetailPage'
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
             </RoleRoute>
           }
         />
+        <Route path="doacoes" element={<DonationsPage />} />
+        <Route path="doacoes/:id" element={<DonationDetailPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

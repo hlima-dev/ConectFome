@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createRecipient, deactivateRecipient, getRecipient, listRecipients, updateRecipient } from '../services/recipients'
 import type { RecipientInput } from '../types/recipients'
 
-export function useRecipients(filters?: { includeInactive?: boolean; search?: string }) {
+export function useRecipients(
+  filters?: { includeInactive?: boolean; search?: string },
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ['recipients', filters],
     queryFn: () => listRecipients(filters),
+    enabled: options?.enabled ?? true,
   })
 }
 

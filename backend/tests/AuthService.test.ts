@@ -6,6 +6,7 @@ import { AuthService } from '../src/services/AuthService'
 const mockPrisma = vi.hoisted(() => ({
   user: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
@@ -46,6 +47,12 @@ describe('AuthService.login', () => {
     vi.clearAllMocks()
     authService = new AuthService()
     mockPrisma.user.update.mockResolvedValue({})
+    // issueSession recarrega o usuário com os perfis (donor/recipient) via
+    // select — nunca inclui password, então nem simulamos esse campo aqui.
+    mockPrisma.user.findUniqueOrThrow.mockImplementation(async () => {
+      const { password: _password, refreshToken: _refreshToken, ...safe } = baseUser()
+      return { ...safe, donorProfile: null, recipientProfile: null }
+    })
   })
 
   it('rejeita e-mail inexistente com mensagem genérica (evita user enumeration)', async () => {
@@ -137,6 +144,10 @@ describe('AuthService.register', () => {
     mockPrisma.$transaction.mockImplementation(async (callback: (tx: typeof mockPrisma) => unknown) =>
       callback(mockPrisma),
     )
+    mockPrisma.user.findUniqueOrThrow.mockImplementation(async () => {
+      const { password: _password, refreshToken: _refreshToken, ...safe } = baseUser({ id: 'user_2' })
+      return { ...safe, donorProfile: null, recipientProfile: null }
+    })
   })
 
   it('rejeita e-mail já cadastrado', async () => {

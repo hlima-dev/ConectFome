@@ -106,7 +106,23 @@ export class AuthService {
       data: { refreshToken: tokens.refreshToken },
     })
 
-    const { password: _password, refreshToken: _refreshToken, ...safeUser } = user
+    // Recarrega com os perfis vinculados: o front usa donorProfile/
+    // recipientProfile logo após o login/registro pra saber se quem está
+    // logado é dono de uma doação (sem esperar uma segunda chamada a /me).
+    const safeUser = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        active: true,
+        createdAt: true,
+        donorProfile: true,
+        recipientProfile: true,
+      },
+    })
 
     return { user: safeUser, ...tokens }
   }

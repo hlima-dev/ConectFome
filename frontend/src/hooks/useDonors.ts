@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createDonor, deactivateDonor, getDonor, listDonors, updateDonor } from '../services/donors'
 import type { DonorInput } from '../types/donors'
 
-export function useDonors(filters?: { includeInactive?: boolean; search?: string }) {
+export function useDonors(filters?: { includeInactive?: boolean; search?: string }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['donors', filters],
     queryFn: () => listDonors(filters),
+    enabled: options?.enabled ?? true,
   })
 }
 
