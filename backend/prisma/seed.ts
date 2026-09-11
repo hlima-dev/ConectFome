@@ -90,10 +90,33 @@ async function main() {
       },
     },
   })
-  console.log(`✅ Receptor: ${receptor1.email}`)
+
+  const receptor2 = await prisma.user.upsert({
+    where: { email: 'familia@conectfome.org' },
+    update: {},
+    create: {
+      name: 'Lar da Vovó Joana',
+      email: 'familia@conectfome.org',
+      password: passwordHash,
+      role: 'RECEPTOR',
+      recipientProfile: {
+        create: {
+          name: 'Lar da Vovó Joana',
+          type: 'FAMILIA',
+          contactName: 'Joana Pereira',
+          phone: '(11) 3333-4444',
+          address: 'Travessa das Acácias, 45',
+          city: 'São Paulo',
+          state: 'SP',
+          peopleServed: 6,
+        },
+      },
+    },
+  })
+  console.log(`✅ Receptores: ${receptor1.email}, ${receptor2.email}`)
 
   // ── Voluntários e veículos (sem login — gerenciados pelo admin) ──
-  await prisma.volunteer.upsert({
+  const voluntario1 = await prisma.volunteer.upsert({
     where: { document: '111.111.111-11' },
     update: {},
     create: { name: 'Carlos Andrade', document: '111.111.111-11', phone: '(11) 98888-1111' },
@@ -104,7 +127,7 @@ async function main() {
     create: { name: 'Fernanda Lima', document: '222.222.222-22', phone: '(11) 98888-2222' },
   })
 
-  await prisma.vehicle.upsert({
+  const veiculo1 = await prisma.vehicle.upsert({
     where: { plate: 'ABC1D23' },
     update: {},
     create: { plate: 'ABC1D23', model: 'Fiorino', capacityKg: 500 },
@@ -114,6 +137,104 @@ async function main() {
     update: {},
     create: { plate: 'XYZ9E88', model: 'Van Sprinter', capacityKg: 1200 },
   })
+
+  // ── Doações de exemplo, cobrindo os principais estados do ciclo ──
+  // (ids fixos só pra deixar o seed idempotente — em produção nasceriam
+  // como cuid normalmente).
+  const donor1 = await prisma.donor.findUniqueOrThrow({ where: { userId: doador1.id } })
+  const donor2 = await prisma.donor.findUniqueOrThrow({ where: { userId: doador2.id } })
+  const recipient1 = await prisma.recipient.findUniqueOrThrow({ where: { userId: receptor1.id } })
+
+  const now = new Date()
+  const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 14, 0, 0))
+
+  // Já resgatada e entregue mês passado — dá histórico pro gráfico mensal.
+  const route1 = await prisma.pickupRoute.upsert({
+    where: { id: 'seed-route-historico' },
+    update: {},
+    create: {
+      id: 'seed-route-historico',
+      vehicleId: veiculo1.id,
+      volunteerId: voluntario1.id,
+      status: 'CONCLUIDA',
+      scheduledFor: lastMonth,
+      departedAt: lastMonth,
+      completedAt: lastMonth,
+    },
+  })
+  await prisma.donation.upsert({
+    where: { id: 'seed-donation-historico' },
+    update: {},
+    create: {
+      id: 'seed-donation-historico',
+      donorId: donor2.id,
+      category: 'PREPARADO',
+      description: 'Marmitas do almoço executivo',
+      estimatedQuantityKg: 35,
+      collectedQuantityKg: 32,
+      pickupWindowStart: lastMonth,
+      pickupWindowEnd: lastMonth,
+      status: 'ENTREGUE',
+      recipientId: recipient1.id,
+      matchedAt: lastMonth,
+      routeId: route1.id,
+      collectedAt: lastMonth,
+      confirmedAt: lastMonth,
+    },
+  })
+
+  // Disponível — ainda sem receptor, pronta pra ser casada pelo admin.
+  await prisma.donation.upsert({
+    where: { id: 'seed-donation-disponivel' },
+    update: {},
+    create: {
+      id: 'seed-donation-disponivel',
+      donorId: donor1.id,
+      category: 'HORTIFRUTI',
+      description: 'Caixas de verduras e legumes fora do padrão estético',
+      estimatedQuantityKg: 18,
+      pickupWindowStart: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+      pickupWindowEnd: new Date(now.getTime() + 30 * 60 * 60 * 1000),
+      status: 'DISPONIVEL',
+    },
+  })
+
+  // Reservada — já casada, pronta pra entrar numa rota.
+  await prisma.donation.upsert({
+    where: { id: 'seed-donation-reservada' },
+    update: {},
+    create: {
+      id: 'seed-donation-reservada',
+      donorId: donor2.id,
+      category: 'PADARIA',
+      description: 'Pães e bolos do dia anterior',
+      estimatedQuantityKg: 12,
+      pickupWindowStart: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+      pickupWindowEnd: new Date(now.getTime() + 30 * 60 * 60 * 1000),
+      status: 'RESERVADA',
+      recipientId: recipient1.id,
+      matchedAt: now,
+    },
+  })
+
+  // Vencida — perdida antes de ser coletada, contraste "resgatado vs perdido".
+  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+  await prisma.donation.upsert({
+    where: { id: 'seed-donation-vencida' },
+    update: {},
+    create: {
+      id: 'seed-donation-vencida',
+      donorId: donor1.id,
+      category: 'PERECIVEL',
+      description: 'Iogurtes perto do vencimento',
+      estimatedQuantityKg: 8,
+      pickupWindowStart: twoDaysAgo,
+      pickupWindowEnd: twoDaysAgo,
+      status: 'VENCIDA',
+    },
+  })
+
+  console.log('✅ Doações de exemplo: disponível, reservada, vencida e uma já entregue (mês passado)')
 
   console.log('\n🎉 Seed concluído com sucesso!')
   console.log('   Senha de todas as contas: Conect@123')

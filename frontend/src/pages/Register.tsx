@@ -34,7 +34,10 @@ const schema = z
     recipientType: z.enum(['ONG', 'FAMILIA']).optional(),
     recipientCity: z.string().optional(),
     recipientState: z.string().optional(),
-    recipientPeopleServed: z.coerce.number().int().positive().optional(),
+    // União com '' — sem isso, campo vazio coage pra 0/NaN e falha o
+    // .positive(), bloqueando o cadastro em silêncio (o input não tem
+    // mensagem de erro visível).
+    recipientPeopleServed: z.union([z.literal(''), z.coerce.number().int().positive()]).optional(),
   })
   .refine((data) => data.role !== 'DOADOR' || (data.donorName?.length ?? 0) >= 2, {
     message: 'Nome do doador é obrigatório',
@@ -93,7 +96,10 @@ export function Register() {
                 type: values.recipientType ?? 'ONG',
                 city: values.recipientCity || undefined,
                 state: values.recipientState || undefined,
-                peopleServed: values.recipientPeopleServed,
+                peopleServed:
+                  values.recipientPeopleServed === '' || values.recipientPeopleServed === undefined
+                    ? undefined
+                    : Number(values.recipientPeopleServed),
               }
             : undefined,
       })
@@ -257,6 +263,9 @@ export function Register() {
                       className="input"
                       {...register('recipientPeopleServed')}
                     />
+                    {errors.recipientPeopleServed && (
+                      <p className="mt-1 text-xs text-red-600">{errors.recipientPeopleServed.message}</p>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
