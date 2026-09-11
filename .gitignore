@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+
+# Variáveis de ambiente locais — .env.example é o template versionado.
+.env
+.env.local
+.env.*.local
+
+logs/
+*.log
+npm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sw?

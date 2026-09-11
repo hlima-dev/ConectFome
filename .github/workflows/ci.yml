@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci --legacy-peer-deps
+
+      - name: Auditoria de dependências (falha em vulnerabilidades altas/críticas)
+        run: npm audit --audit-level=high
+
+      - name: Gerar Prisma Client
+        run: npm run db:generate
+
+      - name: Testes
+        run: npm run test
+
+      - name: Build (typecheck)
+        run: npm run build
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci --legacy-peer-deps
+
+      - name: Auditoria de dependências (falha em vulnerabilidades altas/críticas)
+        run: npm audit --audit-level=high
+
+      - name: Testes
+        run: npm run test
+
+      - name: Build (typecheck + vite build)
+        run: npm run build
