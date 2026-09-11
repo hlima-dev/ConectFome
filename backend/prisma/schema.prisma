@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───
+
+enum Role {
+  ADMIN
+  DOADOR
+  RECEPTOR
+}
+
+enum DonorType {
+  MERCADO
+  RESTAURANTE
+  FEIRA
+  OUTRO
+}
+
+enum RecipientType {
+  ONG
+  FAMILIA
+}
+
+enum FoodCategory {
+  PERECIVEL
+  NAO_PERECIVEL
+  PREPARADO
+  HORTIFRUTI
+  PADARIA
+  OUTRO
+}
+
+// Ciclo de vida de uma doação: DISPONIVEL -> RESERVADA -> AGENDADA ->
+// COLETADA -> ENTREGUE, com ramos CANCELADA/VENCIDA a partir dos estados
+// iniciais. RESERVADA = admin casou com um receptor (nada físico ainda).
+// AGENDADA = entrou numa rota de coleta (ainda nada físico). COLETADA = a
+// rota foi concluída, o alimento foi de fato retirado — esse é o evento
+// que conta como "resgatado" pro relatório. ENTREGUE = o receptor
+// confirmou o recebimento, ação própria dele, independente da rota.
+enum DonationStatus {
+  DISPONIVEL
+  RESERVADA
+  AGENDADA
+  COLETADA
+  ENTREGUE
+  CANCELADA
+  VENCIDA
+}
+
+// PLANEJADA -> EM_ANDAMENTO -> CONCLUIDA (linear), ou CANCELADA a partir
+// de PLANEJADA.
+enum PickupRouteStatus {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+// ─── Auth ───
+
+model User {
+  id       String  @id @default(cuid())
+  name     String
+  email    String  @unique
+  password String
+  role     Role    @default(DOADOR)
+  phone    String?
+  active   Boolean @default(true)
+
+  // Bloqueio por força bruta — complementa qualquer rate limit por IP,
+  // que sozinho não impede tentativas trocando de IP contra uma conta.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  refreshToken        String?
+
+  donorProfile     Donor?
+  recipientProfile Recipient?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ─── Doadores e Receptores ───
+
+model Donor {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  name        String
+  type        DonorType @default(OUTRO)
+  document    String?
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  active      Boolean   @default(true)
+
+  donations Donation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+  @@map("donors")
+}
+
+model Recipient {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  name         String
+  type         RecipientType @default(ONG)
+  document     String?
+  contactName  String?
+  phone        String?
+  email        String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  peopleServed Int?
+  active       Boolean       @default(true)
+
+  donations Donation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+  @@map("recipients")
+}
+
+// ─── Logística ───
+
+model Volunteer {
+  id       String  @id @default(cuid())
+  name     String
+  document String  @unique
+  phone    String?
+  active   Boolean @default(true)
+
+  routes PickupRoute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("volunteers")
+}
+
+model Vehicle {
+  id     String  @id @default(cuid())
+  plate  String  @unique
+  model  String
+  // Informativo apenas — não é validado contra o peso das doações da rota.
+  capacityKg Decimal? @db.Decimal(10, 2)
+  active     Boolean  @default(true)
+
+  routes PickupRoute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vehicles")
+}
+
+// ─── Doação ───
+
+model Donation {
+  id String @id @default(cuid())
+
+  donorId String
+  donor   Donor  @relation(fields: [donorId], references: [id])
+
+  category            FoodCategory @default(OUTRO)
+  description         String
+  estimatedQuantityKg Decimal      @db.Decimal(10, 2)
+  // Preenchido quando a rota é concluída — pode diferir do estimado.
+  collectedQuantityKg Decimal?     @db.Decimal(10, 2)
+
+  bestBeforeDate    DateTime?
+  pickupWindowStart DateTime
+  pickupWindowEnd   DateTime
+
+  status DonationStatus @default(DISPONIVEL)
+
+  recipientId String?
+  recipient   Recipient? @relation(fields: [recipientId], references: [id])
+  matchedAt   DateTime?
+
+  routeId String?
+  route   PickupRoute? @relation(fields: [routeId], references: [id])
+
+  collectedAt DateTime?
+  confirmedAt DateTime?
+  canceledAt  DateTime?
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([donorId])
+  @@index([recipientId])
+  @@index([routeId])
+  @@index([status])
+  @@map("donations")
+}
+
+// ─── Rota de coleta ───
+
+model PickupRoute {
+  id          String @id @default(cuid())
+  // Número sequencial "de romaneio", independente do id (cuid).
+  routeNumber Int    @unique @default(autoincrement())
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id])
+
+  status       PickupRouteStatus @default(PLANEJADA)
+  scheduledFor DateTime
+  departedAt   DateTime?
+  completedAt  DateTime?
+  canceledAt   DateTime?
+  notes        String?           @db.Text
+
+  donations Donation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("pickup_routes")
+}

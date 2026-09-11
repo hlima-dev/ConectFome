@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background-color: #f8fafc;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Estilo padrão de input/select usado em todos os formulários (react-hook-form),
+   pra não repetir a mesma pilha de classes Tailwind em cada campo. */
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none;
+    @apply focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500;
+  }
+}
