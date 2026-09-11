@@ -14,6 +14,7 @@ import { VehiclesPage } from './pages/logistics/VehiclesPage'
 import { PickupRoutesPage } from './pages/logistics/PickupRoutesPage'
 import { PickupRouteFormPage } from './pages/logistics/PickupRouteFormPage'
 import { PickupRouteDetailPage } from './pages/logistics/PickupRouteDetailPage'
+import { ReportsPage } from './pages/reports/ReportsPage'
 
 function App() {
   return (
@@ -85,6 +86,14 @@ function App() {
           element={
             <RoleRoute roles={['ADMIN']}>
               <PickupRouteDetailPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="relatorios"
+          element={
+            <RoleRoute roles={['ADMIN']}>
+              <ReportsPage />
             </RoleRoute>
           }
         />

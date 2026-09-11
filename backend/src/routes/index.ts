@@ -7,7 +7,7 @@ import { donationRouter } from './donations.routes'
 import { volunteerRouter } from './volunteers.routes'
 import { vehicleRouter } from './vehicles.routes'
 import { pickupRouteRouter } from './pickup-routes.routes'
-// Fase seguinte: reports.
+import { reportRouter } from './reports.routes'
 
 const router = Router()
 
@@ -18,5 +18,6 @@ router.use('/donations', donationRouter)
 router.use('/volunteers', volunteerRouter)
 router.use('/vehicles', vehicleRouter)
 router.use('/pickup-routes', pickupRouteRouter)
+router.use('/reports', reportRouter)
 
 export { router }

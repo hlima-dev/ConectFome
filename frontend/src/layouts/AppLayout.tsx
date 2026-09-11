@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Store, Truck, User, X } from 'lucide-react'
+import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Store, Truck, User, X } from 'lucide-react'
 import { getStoredUser, logout as logoutRequest } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
 import type { Role } from '../types/auth'
@@ -43,6 +43,10 @@ const navSections: NavSection[] = [
       { label: 'Voluntários', path: '/voluntarios', icon: User, roles: ['ADMIN'] },
       { label: 'Veículos', path: '/veiculos', icon: Truck, roles: ['ADMIN'] },
     ],
+  },
+  {
+    title: 'Relatórios',
+    items: [{ label: 'Relatórios', path: '/relatorios', icon: BarChart3, roles: ['ADMIN'] }],
   },
 ]
 
