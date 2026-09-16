@@ -1,0 +1,35 @@
+# Blueprint do Render pro backend do ConectFome.
+# Uso: no dashboard do Render, "New +" → "Blueprint" → conectar o repo
+# hlima-dev/conectfome → o Render lê este arquivo e monta o serviço abaixo.
+# O banco (Postgres) é externo — Supabase, do mesmo jeito que o ATHLO usa —
+# porque o Postgres gratuito do próprio Render expira depois de 30 dias.
+# DATABASE_URL e CORS_ORIGINS ficam marcados "sync: false": o Render pede
+# esses valores na hora de aplicar o blueprint, não ficam hardcoded aqui.
+services:
+  - type: web
+    name: conectfome-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: npm install --legacy-peer-deps && npm run db:generate && npm run build
+    startCommand: npm run db:migrate:prod && npm run db:seed && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
