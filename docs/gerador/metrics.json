@@ -1,0 +1,25 @@
+{
+  "backendTests": 81,
+  "backendTestsPassed": 81,
+  "backendTestFiles": 9,
+  "perFile": {
+    "AuthService": 11,
+    "DonationService": 18,
+    "DonorService": 8,
+    "PickupRouteService": 16,
+    "RecipientService": 5,
+    "ReportService": 5,
+    "auth-middleware": 9,
+    "jwt": 4,
+    "verifyCsrf": 5
+  },
+  "routes": 48,
+  "models": 7,
+  "enums": 6,
+  "backendLoc": 2495,
+  "frontendLoc": 4332,
+  "frontendPages": 13,
+  "frontendTestFiles": 2,
+  "frontendTests": 6,
+  "generatedAt": "2026-10-29"
+}

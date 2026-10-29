@@ -4,15 +4,16 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 from PIL import Image
 import shutil, os
-import os
+import os, json
 OUT=os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","figuras")
+M=json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"metrics.json")))
 G="#1b7f5c"; O="#e8710a"; D="#1f2933"; GR="#6b7280"; R="#b42318"
 
 # mapa_mental.png e trello.png são imagens fornecidas pela equipe (já em figuras/)
 # 3 ciclo da doacao
 fig,ax=plt.subplots(figsize=(10,4.0)); ax.axis("off"); ax.set_xlim(0,10); ax.set_ylim(0,3.9)
 main=["DISPONÍVEL","RESERVADA","AGENDADA","COLETADA","ENTREGUE"]
-who=["Doador cadastra","Admin casa com\nreceptor","Admin anexa a\numa rota","Rota concluída\n(voluntário)","Receptor\nconfirma"]
+who=["Doador cadastra","Receptor reserva\n(ou admin casa)","Admin anexa a\numa rota","Rota concluída\n(voluntário)","Receptor\nconfirma"]
 xs=[0.9,2.9,4.9,6.9,8.9]
 for i,(n,x) in enumerate(zip(main,xs)):
     col = O if n=="COLETADA" else G
@@ -40,7 +41,7 @@ box(3.4,0.2,3.2,3.8,"",D)
 ax.text(5,3.75,"Backend · Node + Express + TS",ha="center",color="white",fontsize=9,fontweight="bold")
 for i,t in enumerate(["Middlewares: auth JWT · CSRF · rate limit","Rotas REST (/api)","Controllers (validação Zod)","Services (regras de negócio)","Prisma ORM"]):
     box(3.6,3.0-i*0.62,2.8,0.5,t,"#334155",8)
-box(7.6,1.6,2.2,1.4,"PostgreSQL\n8 modelos · 6 enums\n(Supabase em produção)",O)
+box(7.6,1.6,2.2,1.4,f"PostgreSQL\n{M['models']} modelos · {M['enums']} enums\n(Supabase em produção)",O)
 for a,b in [((2.45,2.3),(3.35,2.3)),((6.65,2.3),(7.55,2.3))]:
     ax.add_patch(FancyArrowPatch(a,b,arrowstyle="<|-|>",mutation_scale=14,color=D))
 ax.text(2.9,2.55,"HTTPS\ncookies\nhttpOnly",ha="center",fontsize=7,color=GR)
@@ -49,14 +50,13 @@ ax.text(1.3,1.2,"Vercel",ha="center",fontsize=8,color=GR); ax.text(5,0.0,"Render
 plt.savefig(f"{OUT}/arquitetura.png",dpi=200,bbox_inches="tight",facecolor="white"); plt.close()
 
 # 5 testes
-mods=["AuthService","DonationService","PickupRouteService","auth-middleware","DonorService","RecipientService","ReportService","verifyCsrf","jwt"]
-vals=[11,18,16,9,8,5,5,5,4]
-o=sorted(zip(vals,mods))
+pf=M["perFile"]
+o=sorted(zip(pf.values(),pf.keys()))
 fig,ax=plt.subplots(figsize=(8,3.8))
 ax.barh([m for v,m in o],[v for v,m in o],color=G)
 for i,(v,m) in enumerate(o): ax.text(v+0.3,i,str(v),va="center",fontsize=9,color=D)
 ax.set_xlabel("Nº de testes automatizados"); ax.spines[["top","right"]].set_visible(False)
-ax.set_title("81 testes, 9 arquivos, 81 aprovados",fontsize=10,loc="left")
+ax.set_title(f"{M['backendTests']} testes, {len(pf)} arquivos, {M['backendTestsPassed']} aprovados (medido em {M['generatedAt']})",fontsize=10,loc="left")
 plt.savefig(f"{OUT}/testes_por_modulo.png",dpi=200,bbox_inches="tight",facecolor="white"); plt.close()
 
 # 6 TAM SAM SOM
