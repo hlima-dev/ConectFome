@@ -45,9 +45,13 @@ enum StorageCondition {
 }
 
 // Ação que gerou um evento no histórico da doação (ver DonationEvent).
+// CASADA = o administrador atribuiu o receptor; RESERVADA = o próprio receptor
+// reservou pelo painel de oportunidades; LIBERADA = a reserva foi desfeita.
 enum DonationAction {
   CRIADA
   CASADA
+  RESERVADA
+  LIBERADA
   AGENDADA
   DESAGENDADA
   COLETADA
@@ -102,6 +106,7 @@ model User {
   donorProfile     Donor?
   recipientProfile Recipient?
   donationEvents   DonationEvent[]
+  notifications    Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -238,7 +243,8 @@ model Donation {
 
   notes String? @db.Text
 
-  events DonationEvent[]
+  events        DonationEvent[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -272,6 +278,29 @@ model DonationEvent {
 
   @@index([donationId, createdAt])
   @@map("donation_events")
+}
+
+// ─── Notificações internas ───
+
+// Aviso mostrado no sino da interface, gerado quando uma doação muda de
+// estado. A mensagem já vem pronta em português; `action` diz o que aconteceu.
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  donationId String
+  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  action  DonationAction
+  message String
+  readAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
 }
 
 // ─── Rota de coleta ───

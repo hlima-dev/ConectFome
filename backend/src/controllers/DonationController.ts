@@ -52,6 +52,26 @@ export class DonationController {
     res.json(successResponse(donation))
   }
 
+  async opportunities(req: Request, res: Response): Promise<void> {
+    const pagination = getPagination(req)
+    const filter = {
+      city: typeof req.query.city === 'string' && req.query.city.trim() ? req.query.city.trim() : undefined,
+      category: req.query.category as FoodCategory | undefined,
+    }
+    const result = await donationService.opportunities(filter, pagination, req.user!)
+    res.json(successResponse(result))
+  }
+
+  async reserve(req: Request, res: Response): Promise<void> {
+    const donation = await donationService.reserve(String(req.params.id), req.user!)
+    res.json(successResponse(donation, 'Doação reservada para você'))
+  }
+
+  async release(req: Request, res: Response): Promise<void> {
+    const donation = await donationService.release(String(req.params.id), req.user!)
+    res.json(successResponse(donation, 'Reserva desfeita — a doação voltou a ficar disponível'))
+  }
+
   async events(req: Request, res: Response): Promise<void> {
     const events = await donationService.findEvents(String(req.params.id), req.user!)
     res.json(successResponse(events))

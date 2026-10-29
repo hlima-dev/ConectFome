@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Modal } from '../../components/Modal'
 import { StatusBadge } from '../../components/StatusBadge'
+import { UrgencyBadge } from '../../components/UrgencyBadge'
+import { formatTimeLeft } from '../../utils/time'
 import {
   useCancelDonation,
   useConfirmReceiptDonation,
@@ -11,6 +13,7 @@ import {
   useDonationEvents,
   useMarkExpiredDonation,
   useMatchDonation,
+  useReleaseDonation,
 } from '../../hooks/useDonations'
 import { useRecipients } from '../../hooks/useRecipients'
 import { getStoredUser } from '../../services/auth'
@@ -110,6 +113,7 @@ export function DonationDetailPage() {
   const cancelDonation = useCancelDonation(id ?? '')
   const markExpired = useMarkExpiredDonation(id ?? '')
   const confirmReceipt = useConfirmReceiptDonation(id ?? '')
+  const releaseReservation = useReleaseDonation(id ?? '')
 
   if (fetchError) {
     return (
@@ -139,7 +143,8 @@ export function DonationDetailPage() {
   const canManageAsRecipient = isAdmin || isOwnerRecipient
 
   const canCancelOrExpire = canManageAsDonor && ['DISPONIVEL', 'RESERVADA'].includes(donation.status)
-  const canMatch = isAdmin && donation.status === 'DISPONIVEL'
+  const canMatch = isAdmin && ['DISPONIVEL', 'RESERVADA'].includes(donation.status)
+  const canRelease = canManageAsRecipient && donation.status === 'RESERVADA'
   const canConfirmReceipt = canManageAsRecipient && donation.status === 'COLETADA'
   const isTerminal = ['ENTREGUE', 'CANCELADA', 'VENCIDA'].includes(donation.status)
 
@@ -158,6 +163,15 @@ export function DonationDetailPage() {
     try {
       await markExpired.mutateAsync()
       setExpiring(false)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
+  async function handleRelease() {
+    setError(null)
+    try {
+      await releaseReservation.mutateAsync()
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -188,7 +202,10 @@ export function DonationDetailPage() {
           <h1 className="text-2xl font-semibold text-slate-900">{donation.description}</h1>
           <p className="text-sm text-slate-500">{FOOD_CATEGORY_LABELS[donation.category]}</p>
         </div>
-        <StatusBadge label={DONATION_STATUS_LABELS[donation.status]} tone={DONATION_STATUS_TONES[donation.status]} />
+        <div className="flex flex-wrap items-center gap-2">
+          <UrgencyBadge urgency={donation.urgency} />
+          <StatusBadge label={DONATION_STATUS_LABELS[donation.status]} tone={DONATION_STATUS_TONES[donation.status]} />
+        </div>
       </div>
 
       {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -218,6 +235,15 @@ export function DonationDetailPage() {
             {formatDate(donation.pickupWindowStart)} até {formatDate(donation.pickupWindowEnd)}
           </p>
         </div>
+        {donation.urgency && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Prazo para coletar</p>
+            <p className="text-sm text-slate-800">
+              {formatDate(donation.urgency.deadline)}
+              {donation.urgency.level !== 'EXPIRED' && ` (restam ${formatTimeLeft(donation.urgency.hoursLeft)})`}
+            </p>
+          </div>
+        )}
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Validade</p>
           <p className="text-sm text-slate-800">{donation.bestBeforeDate ? formatDate(donation.bestBeforeDate) : '—'}</p>
@@ -255,7 +281,17 @@ export function DonationDetailPage() {
             onClick={() => setMatching(true)}
             className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
           >
-            Casar com receptor
+            {donation.status === 'RESERVADA' ? 'Reatribuir a outro receptor' : 'Casar com receptor'}
+          </button>
+        )}
+        {canRelease && (
+          <button
+            type="button"
+            onClick={handleRelease}
+            disabled={releaseReservation.isPending}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+          >
+            {releaseReservation.isPending ? 'Liberando...' : 'Liberar reserva'}
           </button>
         )}
         {canConfirmReceipt && (

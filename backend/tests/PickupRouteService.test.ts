@@ -31,6 +31,13 @@ const mockPrisma = vi.hoisted(() => ({
 
 vi.mock('../src/config/prisma', () => ({ prisma: mockPrisma }))
 
+const notify = vi.hoisted(() => vi.fn())
+vi.mock('../src/services/NotificationService', () => ({
+  NotificationService: class {
+    onDonationEvent = notify
+  },
+}))
+
 describe('PickupRouteService', () => {
   let service: PickupRouteService
 
@@ -79,6 +86,7 @@ describe('PickupRouteService', () => {
         where: { id: 'd1' },
         data: { status: DonationStatus.AGENDADA, routeId: 'r1' },
       })
+      expect(notify).toHaveBeenCalledWith(DonationAction.AGENDADA, 'd1', 'admin_1')
       expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
         data: {
           donationId: 'd1',
@@ -194,6 +202,8 @@ describe('PickupRouteService', () => {
           data: expect.objectContaining({ status: DonationStatus.COLETADA, collectedQuantityKg: 5 }),
         }),
       )
+      expect(notify).toHaveBeenCalledWith(DonationAction.COLETADA, 'd1', 'admin_1')
+      expect(notify).toHaveBeenCalledWith(DonationAction.COLETADA, 'd2', 'admin_1')
       // um evento COLETADA por doação, com o usuário que concluiu a rota
       const events = mockPrisma.donationEvent.create.mock.calls.map((c) => c[0].data)
       expect(events).toHaveLength(2)
@@ -232,6 +242,7 @@ describe('PickupRouteService', () => {
         data: { status: DonationStatus.RESERVADA, routeId: null },
       })
       expect(mockPrisma.donationEvent.create).toHaveBeenCalledTimes(2)
+      expect(notify).toHaveBeenCalledTimes(2)
     })
 
     it('rejeita cancelar uma rota que já não está mais planejada', async () => {

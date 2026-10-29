@@ -31,7 +31,7 @@ describe('DonationTimeline', () => {
     expect(items).toHaveLength(3)
     expect(within(items[0]).getByText('Doação registrada')).toBeInTheDocument()
     expect(within(items[0]).getByText(/Mercado Bom Preço \(Doador\)/)).toBeInTheDocument()
-    expect(within(items[1]).getByText('Reservada para um receptor')).toBeInTheDocument()
+    expect(within(items[1]).getByText('Atribuída a um receptor pela administração')).toBeInTheDocument()
     expect(within(items[1]).getByText(/Administrador \(Administração\)/)).toBeInTheDocument()
   })
 

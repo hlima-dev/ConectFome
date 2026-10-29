@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { StatusBadge } from '../../components/StatusBadge'
+import { UrgencyBadge } from '../../components/UrgencyBadge'
 import { useDonations } from '../../hooks/useDonations'
 import { getStoredUser } from '../../services/auth'
 import {
@@ -42,7 +43,12 @@ export function DonationsPage() {
     { header: 'Janela de coleta', cell: (d) => formatDate(d.pickupWindowStart) },
     {
       header: 'Status',
-      cell: (d) => <StatusBadge label={DONATION_STATUS_LABELS[d.status]} tone={DONATION_STATUS_TONES[d.status]} />,
+      cell: (d) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge label={DONATION_STATUS_LABELS[d.status]} tone={DONATION_STATUS_TONES[d.status]} />
+          <UrgencyBadge urgency={d.urgency} />
+        </div>
+      ),
     },
   ]
 

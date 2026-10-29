@@ -9,6 +9,7 @@ import { DonorsPage } from './pages/donors/DonorsPage'
 import { RecipientsPage } from './pages/recipients/RecipientsPage'
 import { DonationsPage } from './pages/donations/DonationsPage'
 import { DonationDetailPage } from './pages/donations/DonationDetailPage'
+import { OpportunitiesPage } from './pages/donations/OpportunitiesPage'
 import { VolunteersPage } from './pages/logistics/VolunteersPage'
 import { VehiclesPage } from './pages/logistics/VehiclesPage'
 import { PickupRoutesPage } from './pages/logistics/PickupRoutesPage'
@@ -44,6 +45,14 @@ function App() {
           element={
             <RoleRoute roles={['ADMIN']}>
               <RecipientsPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="oportunidades"
+          element={
+            <RoleRoute roles={['RECEPTOR']}>
+              <OpportunitiesPage />
             </RoleRoute>
           }
         />

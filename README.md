@@ -39,7 +39,7 @@ não código copiado, já que os stacks de origem são diferentes.
 conectfome/
 ├── backend/                  # Node + Express + TypeScript + Prisma + PostgreSQL
 │   ├── prisma/
-│   │   ├── schema.prisma     # 8 modelos, 8 enums
+│   │   ├── schema.prisma     # 9 modelos, 8 enums
 │   │   └── seed.ts           # dados de exemplo (idempotente)
 │   ├── src/
 │   │   ├── config/           # env (Zod) e cliente Prisma
@@ -81,7 +81,9 @@ DISPONÍVEL → RESERVADA → AGENDADA → COLETADA → ENTREGUE
 ```
 
 - **DISPONÍVEL**: o doador cadastrou, ainda sem receptor.
-- **RESERVADA**: o admin casou a doação com um receptor.
+- **RESERVADA**: um receptor ficou com a doação — ou ele mesmo reservou
+  pelo painel de Oportunidades, ou o admin casou (e pode reatribuir). O
+  receptor pode liberar a reserva enquanto a doação não estiver numa rota.
 - **AGENDADA**: entrou numa rota de coleta planejada.
 - **COLETADA**: a rota foi concluída — o voluntário coletou de fato.
   **Esse é o evento que conta como "resgatado" no relatório.**
@@ -98,8 +100,25 @@ Cada estado é uma ação distinta e rastreável, em vez de um único campo
 **Histórico (quem fez, quando).** Toda transição grava um `DonationEvent`
 (ação, estado de origem e destino, usuário, data) na mesma transação que
 muda o estado, e a tela da doação mostra a linha do tempo
-(`GET /api/donations/:id/events`). Doações anteriores à existência do
+(`GET /api/v1/donations/:id/events`). Doações anteriores à existência do
 histórico não têm eventos.
+
+**Urgência.** Cada doação ainda não coletada traz `urgency`: o prazo é o
+que vencer primeiro entre a validade (até o fim do dia) e o fim da janela
+de coleta; abaixo de 24 h é "urgente" e passado o prazo é "encerrado".
+Doações com prazo encerrado somem do painel de oportunidades e não podem
+ser reservadas (cabe ao doador ou ao admin marcá-las como vencidas).
+
+**Reserva sem corrida.** A reserva pelo receptor é uma troca de estado
+condicional (só se ainda estiver DISPONÍVEL) dentro de uma transação: se
+duas ONGs reservam ao mesmo tempo, uma vence e a outra recebe 409. Há teste
+de integração para isso.
+
+**Notificações.** Geradas depois que a transição já foi gravada e em
+regime de melhor esforço: uma falha ao notificar nunca desfaz a ação. Não
+avisam o autor da ação. Uma nova doação avisa os receptores ativos da
+mesma cidade do doador (todos, se o doador não informou cidade) e os
+administradores. A interface consulta a cada 30 s.
 
 **Segurança sanitária.** O doador declara que o alimento está próprio para
 consumo (a data da declaração fica registrada) e informa a condição de
@@ -111,7 +130,9 @@ uma declaração: o sistema não mede temperatura.
 | Módulo | O que faz | Quem acessa |
 |---|---|---|
 | Doadores / Receptores | Cadastro, edição e desativação (soft delete) | ADMIN (CRUD completo); o próprio dono vê/edita seu cadastro |
-| Doações | Criar, casar com receptor, cancelar, marcar vencida, confirmar recebimento | DOADOR (as próprias), RECEPTOR (as suas), ADMIN (todas) |
+| Doações | Criar, casar/reatribuir, cancelar, marcar vencida, confirmar recebimento, histórico | DOADOR (as próprias), RECEPTOR (as suas), ADMIN (todas) |
+| Oportunidades | Painel das doações disponíveis, da mais urgente para a menos, com filtro por cidade e categoria; reservar e liberar | RECEPTOR |
+| Notificações | Sino com avisos dos eventos da doação (nova doação, reserva, rota, coleta, entrega, cancelamento) | Todos (cada um vê só as suas) |
 | Voluntários / Veículos | Cadastro simples, com edição | ADMIN |
 | Rotas de coleta | Criar, anexar/desanexar doação, iniciar, concluir, cancelar | ADMIN |
 | Relatórios | Kg resgatado por mês, por doador, por receptor, resumo de KPIs | ADMIN |

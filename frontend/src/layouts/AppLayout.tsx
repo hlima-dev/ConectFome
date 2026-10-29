@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Store, Truck, User, X } from 'lucide-react'
+import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Search, Store, Truck, User, X } from 'lucide-react'
+import { NotificationBell } from '../components/NotificationBell'
 import { getStoredUser, logout as logoutRequest } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
 import type { Role } from '../types/auth'
@@ -33,6 +34,7 @@ const navSections: NavSection[] = [
   {
     title: 'Operação',
     items: [
+      { label: 'Oportunidades', path: '/oportunidades', icon: Search, roles: ['RECEPTOR'] },
       { label: 'Doações', path: '/doacoes', icon: Package },
       { label: 'Rotas de coleta', path: '/rotas', icon: Truck, roles: ['ADMIN'] },
     ],
@@ -133,6 +135,7 @@ export function AppLayout() {
           </button>
 
           <div className="ml-auto flex items-center gap-4">
+            <NotificationBell />
             {user && (
               <div className="text-right leading-tight">
                 <p className="text-sm font-medium text-slate-900">{user.name}</p>

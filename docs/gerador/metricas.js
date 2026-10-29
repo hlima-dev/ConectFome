@@ -1,6 +1,6 @@
 // Mede o estado REAL do código e grava metrics.json. Os documentos leem daqui,
 // então nenhum número (testes, rotas, linhas) é digitado à mão.
-// Uso: node docs/gerador/metricas.js   (requer `npm ci` no backend)
+// Uso: node docs/gerador/metricas.js   (requer `npm ci` no backend e no frontend)
 const { execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
@@ -28,9 +28,12 @@ out.enums = (fs.readFileSync(path.join(root, 'backend/prisma/schema.prisma'), 'u
 out.backendLoc = lines(files('backend/src', /\.ts$/))
 out.frontendLoc = lines(files('frontend/src', /\.tsx?$/))
 out.frontendPages = files('frontend/src/pages', /Page\.tsx$|Dashboard\.tsx$|Login\.tsx$|Register\.tsx$/).length
-const feTests = files('frontend/tests', /\.test\.tsx?$/)
-out.frontendTestFiles = feTests.length
-out.frontendTests = feTests.reduce((n, f) => n + (fs.readFileSync(path.join(root, f), 'utf8').match(/^\s*(it|test)\(/gm) || []).length, 0)
+const feReport = JSON.parse(
+  sh('npx vitest run --reporter=json 2>/dev/null', path.join(root, 'frontend')).replace(/^[^{]*/, ''),
+)
+out.frontendTests = feReport.numTotalTests
+out.frontendTestsPassed = feReport.numPassedTests
+out.frontendTestFiles = feReport.testResults.length
 out.generatedAt = new Date().toISOString().slice(0, 10)
 fs.writeFileSync(path.join(__dirname, 'metrics.json'), JSON.stringify(out, null, 2))
 console.log(out)

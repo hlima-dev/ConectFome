@@ -1,8 +1,10 @@
 import { DonationAction, DonationStatus, FoodCategory, Role, StorageCondition } from '@prisma/client'
 import { prisma } from '../config/prisma'
-import { ForbiddenError, NotFoundError, ValidationError } from '../utils/AppError'
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
+import { computeUrgency, withUrgency } from '../utils/urgency'
 import { donationTransition } from './donationTransition'
+import { NotificationService } from './NotificationService'
 
 interface CreateDonationInput {
   donorId?: string
@@ -42,7 +44,19 @@ interface Requester {
   role: Role
 }
 
+interface OpportunitiesFilter {
+  city?: string
+  category?: FoodCategory
+}
+
+// Teto de linhas carregadas para montar o painel: ele ordena por prazo em
+// memória (o prazo é o menor entre validade e fim da janela, o que o banco
+// não ordena direto). Para o volume esperado de doações DISPONÍVEIS sobra.
+const OPPORTUNITIES_LIMIT = 500
+
 export class DonationService {
+  private notifications = new NotificationService()
+
   // DOADOR sempre doa em nome do próprio cadastro (nunca de um donorId no
   // corpo da requisição); ADMIN pode criar em nome de qualquer doador,
   // passando donorId explicitamente.
@@ -54,7 +68,7 @@ export class DonationService {
     }
     assertStorageCondition(input.category, input.storageCondition)
 
-    return prisma.donation.create({
+    const created = await prisma.donation.create({
       data: {
         donorId,
         category: input.category,
@@ -71,6 +85,9 @@ export class DonationService {
         notes: input.notes,
       },
     })
+
+    await this.notifications.onDonationEvent(DonationAction.CRIADA, created.id, requester.id)
+    return created
   }
 
   async findAll(filter: ListDonationsFilter, pagination: PaginationParams, requester: Requester) {
@@ -95,7 +112,7 @@ export class DonationService {
       prisma.donation.count({ where }),
     ])
 
-    return paginate(donations, total, pagination)
+    return paginate(donations.map((d) => withUrgency(d)), total, pagination)
   }
 
   async findById(id: string, requester: Requester) {
@@ -108,7 +125,7 @@ export class DonationService {
     }
 
     await this.assertAccess(donation, requester)
-    return donation
+    return withUrgency(donation)
   }
 
   // Histórico da doação, do mais antigo ao mais recente. Quem pode ver a
@@ -144,8 +161,12 @@ export class DonationService {
   async match(id: string, recipientId: string, requester: Requester) {
     const donation = await this.getOrThrow(id)
 
-    if (donation.status !== DonationStatus.DISPONIVEL) {
-      throw new ValidationError('Só é possível casar uma doação que esteja disponível')
+    // DISPONIVEL: primeiro casamento. RESERVADA: reatribuição a outro receptor
+    // (o receptor que reservou não pode mais atender). AGENDADA já está numa
+    // rota e precisa sair dela antes.
+    const matchableFrom: DonationStatus[] = [DonationStatus.DISPONIVEL, DonationStatus.RESERVADA]
+    if (!matchableFrom.includes(donation.status)) {
+      throw new ValidationError('Só é possível casar ou reatribuir uma doação disponível ou reservada')
     }
 
     const recipient = await prisma.recipient.findUnique({ where: { id: recipientId } })
@@ -161,7 +182,109 @@ export class DonationService {
         requester.id,
       ),
     ])
+    await this.notifications.onDonationEvent(DonationAction.CASADA, id, requester.id)
     return updated
+  }
+
+  // Painel de oportunidades do receptor: doações DISPONÍVEIS ainda dentro do
+  // prazo, da mais urgente para a menos, com filtro por cidade do doador e
+  // categoria. O endereço completo do doador só aparece depois da reserva.
+  async opportunities(filter: OpportunitiesFilter, pagination: PaginationParams, requester: Requester) {
+    if (requester.role !== Role.RECEPTOR && requester.role !== Role.ADMIN) {
+      throw new ForbiddenError('Apenas receptores e administradores veem as oportunidades')
+    }
+
+    const rows = await prisma.donation.findMany({
+      where: {
+        status: DonationStatus.DISPONIVEL,
+        donor: {
+          active: true,
+          ...(filter.city ? { city: { contains: filter.city, mode: 'insensitive' as const } } : {}),
+        },
+        ...(filter.category ? { category: filter.category } : {}),
+      },
+      include: { donor: { select: { id: true, name: true, city: true, state: true } } },
+      take: OPPORTUNITIES_LIMIT,
+    })
+
+    const open = rows
+      .map((d) => withUrgency(d))
+      .filter((d) => d.urgency && d.urgency.level !== 'EXPIRED')
+      .sort((a, b) => a.urgency!.deadline.getTime() - b.urgency!.deadline.getTime())
+
+    return paginate(open.slice(pagination.skip, pagination.skip + pagination.limit), open.length, pagination)
+  }
+
+  // O receptor reserva uma doação para si. A troca de estado é condicional
+  // (só se ainda estiver DISPONÍVEL) dentro de uma transação: se dois
+  // receptores clicam ao mesmo tempo, um vence e o outro recebe um conflito.
+  async reserve(id: string, requester: Requester) {
+    if (requester.role !== Role.RECEPTOR) {
+      throw new ForbiddenError('Apenas receptores reservam doações pelo painel (o administrador usa o casamento)')
+    }
+    const recipient = await prisma.recipient.findUnique({ where: { userId: requester.id } })
+    if (!recipient || !recipient.active) {
+      throw new ForbiddenError('Cadastro de receptor não encontrado ou inativo')
+    }
+
+    const donation = await this.getOrThrow(id)
+    if (computeUrgency(donation)?.level === 'EXPIRED') {
+      throw new ValidationError('O prazo desta doação já encerrou')
+    }
+
+    const reserved = await prisma.$transaction(async (tx) => {
+      const result = await tx.donation.updateMany({
+        where: { id, status: DonationStatus.DISPONIVEL },
+        data: { status: DonationStatus.RESERVADA, recipientId: recipient.id, matchedAt: new Date() },
+      })
+      if (result.count === 0) {
+        throw new ConflictError('Esta doação não está mais disponível')
+      }
+      await tx.donationEvent.create({
+        data: {
+          donationId: id,
+          action: DonationAction.RESERVADA,
+          fromStatus: DonationStatus.DISPONIVEL,
+          toStatus: DonationStatus.RESERVADA,
+          actorId: requester.id,
+        },
+      })
+      return tx.donation.findUniqueOrThrow({ where: { id } })
+    })
+
+    await this.notifications.onDonationEvent(DonationAction.RESERVADA, id, requester.id)
+    return reserved
+  }
+
+  // Desfaz a reserva (o receptor dono ou o administrador): a doação volta a
+  // ficar disponível. Não vale se já entrou numa rota — aí é preciso tirá-la
+  // da rota primeiro.
+  async release(id: string, requester: Requester) {
+    const donation = await this.getOrThrow(id)
+    await this.assertRecipientAccess(donation, requester)
+
+    const released = await prisma.$transaction(async (tx) => {
+      const result = await tx.donation.updateMany({
+        where: { id, status: DonationStatus.RESERVADA, routeId: null },
+        data: { status: DonationStatus.DISPONIVEL, recipientId: null, matchedAt: null },
+      })
+      if (result.count === 0) {
+        throw new ValidationError('Só é possível liberar uma doação reservada que ainda não está em uma rota')
+      }
+      await tx.donationEvent.create({
+        data: {
+          donationId: id,
+          action: DonationAction.LIBERADA,
+          fromStatus: DonationStatus.RESERVADA,
+          toStatus: DonationStatus.DISPONIVEL,
+          actorId: requester.id,
+        },
+      })
+      return tx.donation.findUniqueOrThrow({ where: { id } })
+    })
+
+    await this.notifications.onDonationEvent(DonationAction.LIBERADA, id, requester.id)
+    return released
   }
 
   async cancel(id: string, requester: Requester) {
@@ -180,6 +303,7 @@ export class DonationService {
         requester.id,
       ),
     ])
+    await this.notifications.onDonationEvent(DonationAction.CANCELADA, id, requester.id)
     return updated
   }
 
@@ -199,6 +323,7 @@ export class DonationService {
         requester.id,
       ),
     ])
+    await this.notifications.onDonationEvent(DonationAction.VENCIDA, id, requester.id)
     return updated
   }
 
@@ -221,6 +346,7 @@ export class DonationService {
         requester.id,
       ),
     ])
+    await this.notifications.onDonationEvent(DonationAction.CONFIRMADA, id, requester.id)
     return updated
   }
 

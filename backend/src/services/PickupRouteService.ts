@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma'
 import { NotFoundError, ValidationError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
 import { donationTransition } from './donationTransition'
+import { NotificationService } from './NotificationService'
 
 interface CreatePickupRouteInput {
   vehicleId: string
@@ -31,6 +32,8 @@ const routeInclude = {
 }
 
 export class PickupRouteService {
+  private notifications = new NotificationService()
+
   async create(input: CreatePickupRouteInput) {
     const vehicle = await prisma.vehicle.findUnique({ where: { id: input.vehicleId } })
     if (!vehicle || !vehicle.active) {
@@ -108,6 +111,7 @@ export class PickupRouteService {
     await prisma.$transaction([
       ...donationTransition(donation, DonationAction.AGENDADA, { status: DonationStatus.AGENDADA, routeId }, actorId),
     ])
+    await this.notifications.onDonationEvent(DonationAction.AGENDADA, donationId, actorId)
 
     return this.findById(routeId)
   }
@@ -128,6 +132,7 @@ export class PickupRouteService {
     await prisma.$transaction([
       ...donationTransition(donation, DonationAction.DESAGENDADA, { status: DonationStatus.RESERVADA, routeId: null }, actorId),
     ])
+    await this.notifications.onDonationEvent(DonationAction.DESAGENDADA, donationId, actorId)
 
     return this.findById(routeId)
   }
@@ -184,6 +189,9 @@ export class PickupRouteService {
       }),
     ])
 
+    for (const donation of donations) {
+      await this.notifications.onDonationEvent(DonationAction.COLETADA, donation.id, actorId)
+    }
     return this.findById(id)
   }
 
@@ -208,6 +216,9 @@ export class PickupRouteService {
       }),
     ])
 
+    for (const donation of donations) {
+      await this.notifications.onDonationEvent(DonationAction.DESAGENDADA, donation.id, actorId)
+    }
     return this.findById(id)
   }
 

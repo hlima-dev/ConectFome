@@ -7,6 +7,8 @@ export type StorageCondition = 'AMBIENTE' | 'REFRIGERADO' | 'CONGELADO'
 export type DonationAction =
   | 'CRIADA'
   | 'CASADA'
+  | 'RESERVADA'
+  | 'LIBERADA'
   | 'AGENDADA'
   | 'DESAGENDADA'
   | 'COLETADA'
@@ -22,6 +24,16 @@ export type DonationStatus =
   | 'ENTREGUE'
   | 'CANCELADA'
   | 'VENCIDA'
+
+export type UrgencyLevel = 'EXPIRED' | 'URGENT' | 'NORMAL'
+
+// Calculada pelo backend: o que vencer primeiro entre a validade e o fim da
+// janela de coleta. É nula depois que o alimento foi coletado.
+export interface Urgency {
+  level: UrgencyLevel
+  deadline: string
+  hoursLeft: number
+}
 
 export interface Donation {
   id: string
@@ -46,9 +58,15 @@ export interface Donation {
   confirmedAt: string | null
   canceledAt: string | null
   expiredAt: string | null
+  urgency: Urgency | null
   notes: string | null
   createdAt: string
   updatedAt: string
+}
+
+// Doação como aparece no painel de oportunidades do receptor.
+export interface Opportunity extends Omit<Donation, 'donor'> {
+  donor: { id: string; name: string; city: string | null; state: string | null }
 }
 
 export interface DonationEvent {
@@ -94,7 +112,9 @@ export const STORAGE_REQUIRED_CATEGORIES: FoodCategory[] = ['PERECIVEL', 'PREPAR
 
 export const DONATION_ACTION_LABELS: Record<DonationAction, string> = {
   CRIADA: 'Doação registrada',
-  CASADA: 'Reservada para um receptor',
+  CASADA: 'Atribuída a um receptor pela administração',
+  RESERVADA: 'Reservada pelo receptor',
+  LIBERADA: 'Reserva desfeita',
   AGENDADA: 'Incluída em uma rota de coleta',
   DESAGENDADA: 'Removida da rota de coleta',
   COLETADA: 'Coletada',

@@ -6,11 +6,14 @@ import {
   getDonation,
   getDonationEvents,
   listDonations,
+  listOpportunities,
+  releaseDonation,
+  reserveDonation,
   markExpiredDonation,
   matchDonation,
   updateDonation,
 } from '../services/donations'
-import type { DonationInput, DonationStatus } from '../types/donations'
+import type { DonationInput, DonationStatus, FoodCategory } from '../types/donations'
 
 export function useDonations(
   filters?: { status?: DonationStatus; donorId?: string; recipientId?: string },
@@ -20,6 +23,13 @@ export function useDonations(
     queryKey: ['donations', filters],
     queryFn: () => listDonations(filters),
     enabled: options?.enabled ?? true,
+  })
+}
+
+export function useOpportunities(filters?: { city?: string; category?: FoodCategory }) {
+  return useQuery({
+    queryKey: ['opportunities', filters],
+    queryFn: () => listOpportunities(filters),
   })
 }
 
@@ -84,5 +94,29 @@ export function useConfirmReceiptDonation(id: string) {
   return useMutation({
     mutationFn: () => confirmReceiptDonation(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['donations'] }),
+  })
+}
+
+// Reservar e liberar mexem em três coisas: o painel, a lista de doações e o sino.
+function invalidateAfterReservation(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+  queryClient.invalidateQueries({ queryKey: ['donations'] })
+  queryClient.invalidateQueries({ queryKey: ['notifications'] })
+}
+
+export function useReserveDonation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => reserveDonation(id),
+    // Em caso de conflito (outra ONG reservou antes) o painel também precisa atualizar.
+    onSettled: () => invalidateAfterReservation(queryClient),
+  })
+}
+
+export function useReleaseDonation(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => releaseDonation(id),
+    onSettled: () => invalidateAfterReservation(queryClient),
   })
 }

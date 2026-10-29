@@ -11,7 +11,7 @@ const reports = new ReportService()
 
 async function resetDatabase() {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE donation_events, donations, pickup_routes, vehicles, volunteers, donors, recipients, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE notifications, donation_events, donations, pickup_routes, vehicles, volunteers, donors, recipients, users RESTART IDENTITY CASCADE',
   )
 }
 

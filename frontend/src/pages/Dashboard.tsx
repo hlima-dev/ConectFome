@@ -31,7 +31,16 @@ export function Dashboard() {
 
       {!isAdmin && (
         <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-          Acompanhe suas doações em{' '}
+          {user?.role === 'RECEPTOR' && (
+            <>
+              Veja o que está disponível agora em{' '}
+              <Link to="/oportunidades" className="font-medium text-emerald-700 hover:underline">
+                Oportunidades
+              </Link>
+              {' e '}
+            </>
+          )}
+          {user?.role === 'RECEPTOR' ? 'acompanhe' : 'Acompanhe'} suas doações em{' '}
           <Link to="/doacoes" className="font-medium text-emerald-700 hover:underline">
             Doações
           </Link>
