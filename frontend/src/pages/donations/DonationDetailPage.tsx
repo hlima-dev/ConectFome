@@ -8,13 +8,20 @@ import {
   useCancelDonation,
   useConfirmReceiptDonation,
   useDonation,
+  useDonationEvents,
   useMarkExpiredDonation,
   useMatchDonation,
 } from '../../hooks/useDonations'
 import { useRecipients } from '../../hooks/useRecipients'
 import { getStoredUser } from '../../services/auth'
 import { getErrorMessage } from '../../utils/errors'
-import { DONATION_STATUS_LABELS, DONATION_STATUS_TONES, FOOD_CATEGORY_LABELS } from '../../types/donations'
+import { DonationTimeline } from './DonationTimeline'
+import {
+  DONATION_STATUS_LABELS,
+  DONATION_STATUS_TONES,
+  FOOD_CATEGORY_LABELS,
+  STORAGE_CONDITION_LABELS,
+} from '../../types/donations'
 
 function formatDate(value: string | null) {
   if (!value) return '—'
@@ -93,6 +100,7 @@ export function DonationDetailPage() {
   const navigate = useNavigate()
   const user = getStoredUser()
   const { data: donation, isLoading, error: fetchError } = useDonation(id)
+  const { data: events, isLoading: eventsLoading } = useDonationEvents(id)
 
   const [matching, setMatching] = useState(false)
   const [canceling, setCanceling] = useState(false)
@@ -215,6 +223,18 @@ export function DonationDetailPage() {
           <p className="text-sm text-slate-800">{donation.bestBeforeDate ? formatDate(donation.bestBeforeDate) : '—'}</p>
         </div>
         <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Armazenamento até a coleta</p>
+          <p className="text-sm text-slate-800">{STORAGE_CONDITION_LABELS[donation.storageCondition]}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Declaração do doador</p>
+          <p className="text-sm text-slate-800">
+            {donation.termsAcceptedAt
+              ? `Próprio para consumo, declarado em ${formatDate(donation.termsAcceptedAt)}`
+              : '— (doação anterior à declaração)'}
+          </p>
+        </div>
+        <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Rota de coleta</p>
           <p className="text-sm text-slate-800">
             {donation.route ? `Rota #${donation.route.routeNumber}` : '—'}
@@ -273,6 +293,11 @@ export function DonationDetailPage() {
         )}
         {isTerminal && <p className="text-sm text-slate-500">Este é um estado final, sem mais ações disponíveis.</p>}
       </div>
+
+      <section className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Histórico</h2>
+        {eventsLoading ? <p className="text-sm text-slate-500">Carregando histórico...</p> : <DonationTimeline events={events ?? []} />}
+      </section>
 
       {matching && id && <MatchModal donationId={id} onClose={() => setMatching(false)} />}
 

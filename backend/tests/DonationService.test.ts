@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DonationStatus, Role } from '@prisma/client'
+import { DonationAction, DonationStatus, FoodCategory, Role, StorageCondition } from '@prisma/client'
 import { DonationService } from '../src/services/DonationService'
 import { ForbiddenError, NotFoundError, ValidationError } from '../src/utils/AppError'
 
@@ -11,12 +11,17 @@ const mockPrisma = vi.hoisted(() => ({
     count: vi.fn(),
     update: vi.fn(),
   },
+  donationEvent: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+  },
   donor: {
     findUnique: vi.fn(),
   },
   recipient: {
     findUnique: vi.fn(),
   },
+  $transaction: vi.fn(),
 }))
 
 vi.mock('../src/config/prisma', () => ({ prisma: mockPrisma }))
@@ -31,6 +36,7 @@ const baseInput = {
   estimatedQuantityKg: 10,
   pickupWindowStart: new Date('2026-01-01T10:00:00Z'),
   pickupWindowEnd: new Date('2026-01-01T12:00:00Z'),
+  acceptTerms: true,
 }
 
 describe('DonationService', () => {
@@ -38,6 +44,8 @@ describe('DonationService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // $transaction([...ops]) com ops já "executadas" pelos mocks: devolve os resultados
+    mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => Promise.all(ops as Promise<unknown>[]))
     service = new DonationService()
   })
 
@@ -73,6 +81,71 @@ describe('DonationService', () => {
     it('RECEPTOR não pode criar doação', async () => {
       await expect(service.create(baseInput, recipientUser)).rejects.toThrow(ForbiddenError)
     })
+
+    it('exige a declaração de que o alimento está próprio para consumo', async () => {
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1', active: true })
+      await expect(service.create({ ...baseInput, acceptTerms: false }, donorUser)).rejects.toThrow(
+        /próprio para consumo/,
+      )
+      expect(mockPrisma.donation.create).not.toHaveBeenCalled()
+    })
+
+    it('grava o aceite com data e o evento CRIADA com o usuário na mesma criação', async () => {
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1', active: true })
+      mockPrisma.donation.create.mockResolvedValue({ id: 'don1' })
+
+      await service.create(baseInput, donorUser)
+
+      const data = mockPrisma.donation.create.mock.calls[0][0].data
+      expect(data.termsAcceptedAt).toBeInstanceOf(Date)
+      expect(data.events.create).toEqual({
+        action: DonationAction.CRIADA,
+        fromStatus: null,
+        toStatus: DonationStatus.DISPONIVEL,
+        actorId: donorUser.id,
+      })
+    })
+
+    it.each([FoodCategory.PERECIVEL, FoodCategory.PREPARADO])(
+      'categoria %s exige condição de armazenamento explícita',
+      async (category) => {
+        mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1', active: true })
+        await expect(service.create({ ...baseInput, category }, donorUser)).rejects.toThrow(/condição de armazenamento/)
+      },
+    )
+
+    it('perecível com condição informada é aceito', async () => {
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1', active: true })
+      mockPrisma.donation.create.mockResolvedValue({ id: 'don1' })
+
+      await service.create(
+        { ...baseInput, category: FoodCategory.PERECIVEL, storageCondition: StorageCondition.REFRIGERADO },
+        donorUser,
+      )
+
+      expect(mockPrisma.donation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ storageCondition: StorageCondition.REFRIGERADO }),
+        }),
+      )
+    })
+
+    it('categorias não perecíveis não exigem a condição (vale o padrão)', async () => {
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1', active: true })
+      mockPrisma.donation.create.mockResolvedValue({ id: 'don1' })
+      await service.create({ ...baseInput, category: FoodCategory.NAO_PERECIVEL }, donorUser)
+      expect(mockPrisma.donation.create).toHaveBeenCalled()
+    })
+  })
+
+  describe('update', () => {
+    it('trocar a categoria para perecível sem informar a condição é rejeitado', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue({ id: 'don1', donorId: 'd1', status: DonationStatus.DISPONIVEL })
+      await expect(service.update('don1', { category: FoodCategory.PERECIVEL }, admin)).rejects.toThrow(
+        /condição de armazenamento/,
+      )
+      expect(mockPrisma.donation.update).not.toHaveBeenCalled()
+    })
   })
 
   describe('match', () => {
@@ -88,6 +161,15 @@ describe('DonationService', () => {
           data: expect.objectContaining({ status: DonationStatus.RESERVADA, recipientId: 'r1' }),
         }),
       )
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: {
+          donationId: 'don1',
+          action: DonationAction.CASADA,
+          fromStatus: DonationStatus.DISPONIVEL,
+          toStatus: DonationStatus.RESERVADA,
+          actorId: admin.id,
+        },
+      })
     })
 
     it('não casa doação que não esteja DISPONIVEL', async () => {
@@ -113,6 +195,9 @@ describe('DonationService', () => {
       expect(mockPrisma.donation.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ status: DonationStatus.CANCELADA }) }),
       )
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ action: DonationAction.CANCELADA, actorId: donorUser.id }),
+      })
     })
 
     it('outro doador não pode cancelar', async () => {
@@ -133,8 +218,13 @@ describe('DonationService', () => {
       mockPrisma.donation.update.mockResolvedValue({ id: 'don1', status: DonationStatus.VENCIDA })
       await service.markExpired('don1', admin)
       expect(mockPrisma.donation.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { status: DonationStatus.VENCIDA } }),
+        expect.objectContaining({
+          data: expect.objectContaining({ status: DonationStatus.VENCIDA, expiredAt: expect.any(Date) }),
+        }),
       )
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ action: DonationAction.VENCIDA, toStatus: DonationStatus.VENCIDA }),
+      })
     })
 
     it('não marca como vencida uma doação já agendada', async () => {
@@ -158,6 +248,13 @@ describe('DonationService', () => {
       expect(mockPrisma.donation.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ status: DonationStatus.ENTREGUE }) }),
       )
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: DonationAction.CONFIRMADA,
+          fromStatus: DonationStatus.COLETADA,
+          actorId: recipientUser.id,
+        }),
+      })
     })
 
     it('outro receptor não pode confirmar', async () => {
@@ -178,6 +275,33 @@ describe('DonationService', () => {
       })
       mockPrisma.recipient.findUnique.mockResolvedValue({ id: 'r1' })
       await expect(service.confirmReceipt('don1', recipientUser)).rejects.toThrow(ValidationError)
+    })
+  })
+
+  describe('findEvents', () => {
+    it('dono DOADOR vê o histórico da própria doação', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue({ id: 'don1', donorId: 'd1', recipientId: null })
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1' })
+      mockPrisma.donationEvent.findMany.mockResolvedValue([{ id: 'e1' }])
+
+      const events = await service.findEvents('don1', donorUser)
+
+      expect(events).toEqual([{ id: 'e1' }])
+      expect(mockPrisma.donationEvent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { donationId: 'don1' }, orderBy: { createdAt: 'asc' } }),
+      )
+    })
+
+    it('outro doador não vê o histórico', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue({ id: 'don1', donorId: 'd1', recipientId: null })
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd2' })
+      await expect(service.findEvents('don1', otherDonorUser)).rejects.toThrow(ForbiddenError)
+      expect(mockPrisma.donationEvent.findMany).not.toHaveBeenCalled()
+    })
+
+    it('lança NotFoundError pra doação inexistente', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(null)
+      await expect(service.findEvents('x', admin)).rejects.toThrow(NotFoundError)
     })
   })
 

@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Donation, DonationInput, DonationStatus } from '../types/donations'
+import type { Donation, DonationEvent, DonationInput, DonationStatus } from '../types/donations'
 
 export async function listDonations(params?: {
   status?: DonationStatus
@@ -12,6 +12,11 @@ export async function listDonations(params?: {
 
 export async function getDonation(id: string): Promise<Donation> {
   const response = await api.get(`/donations/${id}`)
+  return response.data.data
+}
+
+export async function getDonationEvents(id: string): Promise<DonationEvent[]> {
+  const response = await api.get(`/donations/${id}/events`)
   return response.data.data
 }
 

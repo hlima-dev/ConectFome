@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DonationStatus, PickupRouteStatus } from '@prisma/client'
+import { DonationAction, DonationStatus, PickupRouteStatus } from '@prisma/client'
 import { PickupRouteService } from '../src/services/PickupRouteService'
 import { NotFoundError, ValidationError } from '../src/utils/AppError'
 
@@ -16,6 +16,9 @@ const mockPrisma = vi.hoisted(() => ({
     findUnique: vi.fn(),
     update: vi.fn(),
     count: vi.fn(),
+  },
+  donationEvent: {
+    create: vi.fn(),
   },
   vehicle: {
     findUnique: vi.fn(),
@@ -70,11 +73,20 @@ describe('PickupRouteService', () => {
       mockPrisma.donation.findUnique.mockResolvedValue({ id: 'd1', status: DonationStatus.RESERVADA, routeId: null })
       mockPrisma.donation.update.mockResolvedValue({})
 
-      await service.attachDonation('r1', 'd1')
+      await service.attachDonation('r1', 'd1', 'admin_1')
 
       expect(mockPrisma.donation.update).toHaveBeenCalledWith({
         where: { id: 'd1' },
         data: { status: DonationStatus.AGENDADA, routeId: 'r1' },
+      })
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: {
+          donationId: 'd1',
+          action: DonationAction.AGENDADA,
+          fromStatus: DonationStatus.RESERVADA,
+          toStatus: DonationStatus.AGENDADA,
+          actorId: 'admin_1',
+        },
       })
     })
 
@@ -107,14 +119,22 @@ describe('PickupRouteService', () => {
   describe('detachDonation', () => {
     it('desanexa e devolve a doação pra RESERVADA', async () => {
       mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.PLANEJADA })
-      mockPrisma.donation.findUnique.mockResolvedValue({ id: 'd1', routeId: 'r1' })
+      mockPrisma.donation.findUnique.mockResolvedValue({ id: 'd1', routeId: 'r1', status: DonationStatus.AGENDADA })
       mockPrisma.donation.update.mockResolvedValue({})
 
-      await service.detachDonation('r1', 'd1')
+      await service.detachDonation('r1', 'd1', 'admin_1')
 
       expect(mockPrisma.donation.update).toHaveBeenCalledWith({
         where: { id: 'd1' },
         data: { status: DonationStatus.RESERVADA, routeId: null },
+      })
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: DonationAction.DESAGENDADA,
+          fromStatus: DonationStatus.AGENDADA,
+          toStatus: DonationStatus.RESERVADA,
+          actorId: 'admin_1',
+        }),
       })
     })
 
@@ -154,13 +174,13 @@ describe('PickupRouteService', () => {
     it('conclui a rota e marca as doações anexadas como COLETADA usando o estimado como padrão', async () => {
       mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.EM_ANDAMENTO })
       mockPrisma.donation.findMany.mockResolvedValue([
-        { id: 'd1', estimatedQuantityKg: 10 },
-        { id: 'd2', estimatedQuantityKg: 5 },
+        { id: 'd1', status: DonationStatus.AGENDADA, estimatedQuantityKg: 10 },
+        { id: 'd2', status: DonationStatus.AGENDADA, estimatedQuantityKg: 5 },
       ])
       mockPrisma.donation.update.mockResolvedValue({})
       mockPrisma.pickupRoute.update.mockResolvedValue({})
 
-      await service.complete('r1', [{ donationId: 'd1', collectedQuantityKg: 8 }])
+      await service.complete('r1', [{ donationId: 'd1', collectedQuantityKg: 8 }], 'admin_1')
 
       expect(mockPrisma.donation.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -174,6 +194,15 @@ describe('PickupRouteService', () => {
           data: expect.objectContaining({ status: DonationStatus.COLETADA, collectedQuantityKg: 5 }),
         }),
       )
+      // um evento COLETADA por doação, com o usuário que concluiu a rota
+      const events = mockPrisma.donationEvent.create.mock.calls.map((c) => c[0].data)
+      expect(events).toHaveLength(2)
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ donationId: 'd1', action: DonationAction.COLETADA, actorId: 'admin_1' }),
+          expect.objectContaining({ donationId: 'd2', action: DonationAction.COLETADA, actorId: 'admin_1' }),
+        ]),
+      )
     })
 
     it('rejeita concluir uma rota que não está em andamento', async () => {
@@ -185,11 +214,14 @@ describe('PickupRouteService', () => {
   describe('cancel', () => {
     it('cancela a rota e devolve as doações anexadas pra RESERVADA', async () => {
       mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.PLANEJADA })
-      mockPrisma.donation.findMany.mockResolvedValue([{ id: 'd1' }, { id: 'd2' }])
+      mockPrisma.donation.findMany.mockResolvedValue([
+        { id: 'd1', status: DonationStatus.AGENDADA },
+        { id: 'd2', status: DonationStatus.AGENDADA },
+      ])
       mockPrisma.donation.update.mockResolvedValue({})
       mockPrisma.pickupRoute.update.mockResolvedValue({})
 
-      await service.cancel('r1')
+      await service.cancel('r1', 'admin_1')
 
       expect(mockPrisma.donation.update).toHaveBeenCalledWith({
         where: { id: 'd1' },
@@ -199,6 +231,7 @@ describe('PickupRouteService', () => {
         where: { id: 'd2' },
         data: { status: DonationStatus.RESERVADA, routeId: null },
       })
+      expect(mockPrisma.donationEvent.create).toHaveBeenCalledTimes(2)
     })
 
     it('rejeita cancelar uma rota que já não está mais planejada', async () => {

@@ -36,6 +36,26 @@ enum FoodCategory {
   OUTRO
 }
 
+// Como o alimento precisa ficar guardado até a coleta. Declarado pelo doador;
+// o sistema não mede temperatura.
+enum StorageCondition {
+  AMBIENTE
+  REFRIGERADO
+  CONGELADO
+}
+
+// Ação que gerou um evento no histórico da doação (ver DonationEvent).
+enum DonationAction {
+  CRIADA
+  CASADA
+  AGENDADA
+  DESAGENDADA
+  COLETADA
+  CONFIRMADA
+  CANCELADA
+  VENCIDA
+}
+
 // Ciclo de vida de uma doação: DISPONIVEL -> RESERVADA -> AGENDADA ->
 // COLETADA -> ENTREGUE, com ramos CANCELADA/VENCIDA a partir dos estados
 // iniciais. RESERVADA = admin casou com um receptor (nada físico ainda).
@@ -81,6 +101,7 @@ model User {
 
   donorProfile     Donor?
   recipientProfile Recipient?
+  donationEvents   DonationEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,9 +182,9 @@ model Volunteer {
 }
 
 model Vehicle {
-  id     String  @id @default(cuid())
-  plate  String  @unique
-  model  String
+  id         String   @id @default(cuid())
+  plate      String   @unique
+  model      String
   // Informativo apenas — não é validado contra o peso das doações da rota.
   capacityKg Decimal? @db.Decimal(10, 2)
   active     Boolean  @default(true)
@@ -194,6 +215,13 @@ model Donation {
   pickupWindowStart DateTime
   pickupWindowEnd   DateTime
 
+  // Obrigatório informar explicitamente para PERECIVEL e PREPARADO (validado
+  // no DonationService); nas demais categorias vale o padrão AMBIENTE.
+  storageCondition StorageCondition @default(AMBIENTE)
+  // Declaração do doador de que o alimento está próprio para consumo. Fica
+  // nulo só nas doações anteriores à existência dessa declaração.
+  termsAcceptedAt  DateTime?
+
   status DonationStatus @default(DISPONIVEL)
 
   recipientId String?
@@ -206,8 +234,11 @@ model Donation {
   collectedAt DateTime?
   confirmedAt DateTime?
   canceledAt  DateTime?
+  expiredAt   DateTime?
 
   notes String? @db.Text
+
+  events DonationEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -217,6 +248,30 @@ model Donation {
   @@index([routeId])
   @@index([status])
   @@map("donations")
+}
+
+// ─── Histórico da doação ───
+
+// Uma linha por transição de estado: quem fez, quando, de qual estado pra
+// qual. É o que torna o ciclo da doação auditável. actorId é nulo quando a
+// transição não tem um usuário (dados anteriores ao histórico, seed).
+model DonationEvent {
+  id String @id @default(cuid())
+
+  donationId String
+  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+
+  action     DonationAction
+  fromStatus DonationStatus?
+  toStatus   DonationStatus
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([donationId, createdAt])
+  @@map("donation_events")
 }
 
 // ─── Rota de coleta ───

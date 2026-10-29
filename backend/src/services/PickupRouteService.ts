@@ -1,7 +1,8 @@
-import { DonationStatus, PickupRouteStatus } from '@prisma/client'
+import { DonationAction, DonationStatus, PickupRouteStatus } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { NotFoundError, ValidationError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
+import { donationTransition } from './donationTransition'
 
 interface CreatePickupRouteInput {
   vehicleId: string
@@ -90,7 +91,7 @@ export class PickupRouteService {
   }
 
   // Anexa uma doação já casada (RESERVADA, sem rota) a uma rota planejada.
-  async attachDonation(routeId: string, donationId: string) {
+  async attachDonation(routeId: string, donationId: string, actorId?: string) {
     const route = await this.getOrThrow(routeId)
     if (route.status !== PickupRouteStatus.PLANEJADA) {
       throw new ValidationError('Só é possível anexar doações a uma rota planejada')
@@ -104,17 +105,16 @@ export class PickupRouteService {
       throw new ValidationError('Só é possível anexar uma doação reservada e ainda sem rota')
     }
 
-    await prisma.donation.update({
-      where: { id: donationId },
-      data: { status: DonationStatus.AGENDADA, routeId },
-    })
+    await prisma.$transaction([
+      ...donationTransition(donation, DonationAction.AGENDADA, { status: DonationStatus.AGENDADA, routeId }, actorId),
+    ])
 
     return this.findById(routeId)
   }
 
   // Desanexa e devolve a doação pra RESERVADA — ela volta a poder ser
   // roteada em outra rota planejada depois.
-  async detachDonation(routeId: string, donationId: string) {
+  async detachDonation(routeId: string, donationId: string, actorId?: string) {
     const route = await this.getOrThrow(routeId)
     if (route.status !== PickupRouteStatus.PLANEJADA) {
       throw new ValidationError('Só é possível desanexar doações de uma rota planejada')
@@ -125,10 +125,9 @@ export class PickupRouteService {
       throw new NotFoundError('Doação não encontrada nessa rota')
     }
 
-    await prisma.donation.update({
-      where: { id: donationId },
-      data: { status: DonationStatus.RESERVADA, routeId: null },
-    })
+    await prisma.$transaction([
+      ...donationTransition(donation, DonationAction.DESAGENDADA, { status: DonationStatus.RESERVADA, routeId: null }, actorId),
+    ])
 
     return this.findById(routeId)
   }
@@ -155,7 +154,7 @@ export class PickupRouteService {
   // Conclui a rota e propaga COLETADA + collectedAt (+ collectedQuantityKg,
   // com o estimado como padrão) pra toda doação anexada — é o evento que
   // conta como "resgatado" no relatório.
-  async complete(id: string, overrides: CollectedQuantityOverride[] = []) {
+  async complete(id: string, overrides: CollectedQuantityOverride[] = [], actorId?: string) {
     const route = await this.getOrThrow(id)
 
     if (route.status !== PickupRouteStatus.EM_ANDAMENTO) {
@@ -167,15 +166,17 @@ export class PickupRouteService {
     const collectedAt = new Date()
 
     await prisma.$transaction([
-      ...donations.map((donation) =>
-        prisma.donation.update({
-          where: { id: donation.id },
-          data: {
+      ...donations.flatMap((donation) =>
+        donationTransition(
+          donation,
+          DonationAction.COLETADA,
+          {
             status: DonationStatus.COLETADA,
             collectedAt,
             collectedQuantityKg: overrideMap.get(donation.id) ?? donation.estimatedQuantityKg,
           },
-        }),
+          actorId,
+        ),
       ),
       prisma.pickupRoute.update({
         where: { id },
@@ -188,7 +189,7 @@ export class PickupRouteService {
 
   // Sem precedente no PRODUCTION ERP (o romaneio de lá não tem essa saída)
   // — devolve toda doação anexada pra RESERVADA, limpando a rota delas.
-  async cancel(id: string) {
+  async cancel(id: string, actorId?: string) {
     const route = await this.getOrThrow(id)
 
     if (route.status !== PickupRouteStatus.PLANEJADA) {
@@ -198,11 +199,8 @@ export class PickupRouteService {
     const donations = await prisma.donation.findMany({ where: { routeId: id } })
 
     await prisma.$transaction([
-      ...donations.map((donation) =>
-        prisma.donation.update({
-          where: { id: donation.id },
-          data: { status: DonationStatus.RESERVADA, routeId: null },
-        }),
+      ...donations.flatMap((donation) =>
+        donationTransition(donation, DonationAction.DESAGENDADA, { status: DonationStatus.RESERVADA, routeId: null }, actorId),
       ),
       prisma.pickupRoute.update({
         where: { id },

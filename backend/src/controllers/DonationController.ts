@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import { DonationStatus, FoodCategory } from '@prisma/client'
+import { DonationStatus, FoodCategory, StorageCondition } from '@prisma/client'
 import { DonationService } from '../services/DonationService'
 import { getPagination, successResponse } from '../utils/pagination'
 import { optionalDate } from '../utils/validation'
@@ -15,10 +15,14 @@ const createDonationSchema = z.object({
   bestBeforeDate: optionalDate,
   pickupWindowStart: z.coerce.date(),
   pickupWindowEnd: z.coerce.date(),
+  storageCondition: z.nativeEnum(StorageCondition).optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'É necessário declarar que o alimento está próprio para consumo' }),
+  }),
   notes: z.string().optional(),
 })
 
-const updateDonationSchema = createDonationSchema.omit({ donorId: true }).partial()
+const updateDonationSchema = createDonationSchema.omit({ donorId: true, acceptTerms: true }).partial()
 
 const matchSchema = z.object({
   recipientId: z.string().min(1, 'Informe o receptor'),
@@ -46,6 +50,11 @@ export class DonationController {
   async getById(req: Request, res: Response): Promise<void> {
     const donation = await donationService.findById(String(req.params.id), req.user!)
     res.json(successResponse(donation))
+  }
+
+  async events(req: Request, res: Response): Promise<void> {
+    const events = await donationService.findEvents(String(req.params.id), req.user!)
+    res.json(successResponse(events))
   }
 
   async update(req: Request, res: Response): Promise<void> {

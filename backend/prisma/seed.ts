@@ -1,10 +1,25 @@
-import { PrismaClient } from '@prisma/client'
+import { DonationAction, DonationStatus, PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { resolveSeedPlan } from './seedMode'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Iniciando seed...')
+
+  const plan = resolveSeedPlan(process.env)
+
+  if (plan.mode === 'admin-only') {
+    // Produção: só o administrador, com credenciais do ambiente. `update: {}`
+    // garante que reiniciar o serviço nunca sobrescreve uma senha já trocada.
+    const admin = await prisma.user.upsert({
+      where: { email: plan.email },
+      update: {},
+      create: { name: plan.name, email: plan.email, password: await bcrypt.hash(plan.password, 12), role: 'ADMIN' },
+    })
+    console.log(`✅ Administrador: ${admin.email} (sem dados de demonstração)`)
+    return
+  }
 
   const passwordHash = await bcrypt.hash('Conect@123', 10)
 
@@ -169,6 +184,8 @@ async function main() {
       id: 'seed-donation-historico',
       donorId: donor2.id,
       category: 'PREPARADO',
+      storageCondition: 'REFRIGERADO',
+      termsAcceptedAt: lastMonth,
       description: 'Marmitas do almoço executivo',
       estimatedQuantityKg: 35,
       collectedQuantityKg: 32,
@@ -191,6 +208,7 @@ async function main() {
       id: 'seed-donation-disponivel',
       donorId: donor1.id,
       category: 'HORTIFRUTI',
+      termsAcceptedAt: now,
       description: 'Caixas de verduras e legumes fora do padrão estético',
       estimatedQuantityKg: 18,
       pickupWindowStart: new Date(now.getTime() + 24 * 60 * 60 * 1000),
@@ -207,6 +225,7 @@ async function main() {
       id: 'seed-donation-reservada',
       donorId: donor2.id,
       category: 'PADARIA',
+      termsAcceptedAt: now,
       description: 'Pães e bolos do dia anterior',
       estimatedQuantityKg: 12,
       pickupWindowStart: new Date(now.getTime() + 24 * 60 * 60 * 1000),
@@ -226,6 +245,9 @@ async function main() {
       id: 'seed-donation-vencida',
       donorId: donor1.id,
       category: 'PERECIVEL',
+      storageCondition: 'REFRIGERADO',
+      termsAcceptedAt: twoDaysAgo,
+      expiredAt: now,
       description: 'Iogurtes perto do vencimento',
       estimatedQuantityKg: 8,
       pickupWindowStart: twoDaysAgo,
@@ -233,6 +255,32 @@ async function main() {
       status: 'VENCIDA',
     },
   })
+
+  // Histórico de cada doação de exemplo (idempotente: só grava se ainda não houver).
+  type Step = [action: DonationAction, from: DonationStatus | null, to: DonationStatus, actorId: string, at: Date]
+  async function seedEvents(donationId: string, steps: Step[]) {
+    if ((await prisma.donationEvent.count({ where: { donationId } })) > 0) return
+    await prisma.donationEvent.createMany({
+      data: steps.map(([action, fromStatus, toStatus, actorId, createdAt]) => ({ donationId, action, fromStatus, toStatus, actorId, createdAt })),
+    })
+  }
+  const dayBefore = new Date(lastMonth.getTime() - 24 * 60 * 60 * 1000)
+  await seedEvents('seed-donation-historico', [
+    ['CRIADA', null, 'DISPONIVEL', doador2.id, dayBefore],
+    ['CASADA', 'DISPONIVEL', 'RESERVADA', admin.id, dayBefore],
+    ['AGENDADA', 'RESERVADA', 'AGENDADA', admin.id, lastMonth],
+    ['COLETADA', 'AGENDADA', 'COLETADA', admin.id, lastMonth],
+    ['CONFIRMADA', 'COLETADA', 'ENTREGUE', receptor1.id, lastMonth],
+  ])
+  await seedEvents('seed-donation-disponivel', [['CRIADA', null, 'DISPONIVEL', doador1.id, now]])
+  await seedEvents('seed-donation-reservada', [
+    ['CRIADA', null, 'DISPONIVEL', doador2.id, now],
+    ['CASADA', 'DISPONIVEL', 'RESERVADA', admin.id, now],
+  ])
+  await seedEvents('seed-donation-vencida', [
+    ['CRIADA', null, 'DISPONIVEL', doador1.id, twoDaysAgo],
+    ['VENCIDA', 'DISPONIVEL', 'VENCIDA', doador1.id, now],
+  ])
 
   console.log('✅ Doações de exemplo: disponível, reservada, vencida e uma já entregue (mês passado)')
 

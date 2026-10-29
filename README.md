@@ -39,7 +39,7 @@ não código copiado, já que os stacks de origem são diferentes.
 conectfome/
 ├── backend/                  # Node + Express + TypeScript + Prisma + PostgreSQL
 │   ├── prisma/
-│   │   ├── schema.prisma     # 8 modelos, 6 enums
+│   │   ├── schema.prisma     # 8 modelos, 8 enums
 │   │   └── seed.ts           # dados de exemplo (idempotente)
 │   ├── src/
 │   │   ├── config/           # env (Zod) e cliente Prisma
@@ -91,9 +91,20 @@ DISPONÍVEL → RESERVADA → AGENDADA → COLETADA → ENTREGUE
   registrando o que não virou resgate — o contraste com o que foi
   resgatado é, em si, parte do indicador de ODS 12.
 
-Cada estado é uma ação distinta e rastreável (quem fez, quando), em vez
-de um único campo "concluído" — é isso que permite ao relatório separar
-"resgatado" de "entregue" de "perdido".
+Cada estado é uma ação distinta e rastreável, em vez de um único campo
+"concluído" — é isso que permite ao relatório separar "resgatado" de
+"entregue" de "perdido".
+
+**Histórico (quem fez, quando).** Toda transição grava um `DonationEvent`
+(ação, estado de origem e destino, usuário, data) na mesma transação que
+muda o estado, e a tela da doação mostra a linha do tempo
+(`GET /api/donations/:id/events`). Doações anteriores à existência do
+histórico não têm eventos.
+
+**Segurança sanitária.** O doador declara que o alimento está próprio para
+consumo (a data da declaração fica registrada) e informa a condição de
+armazenamento até a coleta — obrigatória para perecíveis e preparados. É
+uma declaração: o sistema não mede temperatura.
 
 ## Módulos
 
@@ -132,9 +143,14 @@ npm install
 npm run dev                 # http://localhost:5173
 ```
 
-### Credenciais de exemplo (seed)
+### Credenciais de exemplo (seed) — só para desenvolvimento
 
-Senha de todas as contas: `Conect@123`
+Senha de todas as contas: `Conect@123`. **Essa senha é pública.** Em
+`NODE_ENV=production` o seed **não** cria essas contas: cria apenas o
+administrador definido em `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mínimo de 12
+caracteres, diferente da senha pública) e falha se faltarem. Para uma demo
+pública com dados de exemplo é preciso optar explicitamente com
+`SEED_DEMO=true`.
 
 | Papel | E-mail | Perfil |
 |---|---|---|
@@ -151,15 +167,24 @@ anterior (pra o gráfico de relatório mostrar mais de um mês).
 ## Testes
 
 ```bash
-cd backend  && npm run test   # 81 testes — services e middlewares
-cd frontend && npm run test   # testes de componente (Login/Register)
+cd backend  && npm run test              # unitários (Prisma simulado) — services e middlewares
+cd backend  && npm run test:integration  # contra PostgreSQL real (ver abaixo)
+cd frontend && npm run test              # testes de componente
 ```
 
-Escopo deliberado: testes unitários com Prisma mockado (`vi.mock`),
-sem integração com banco real — a mesma escolha do projeto ATHLO. A
-consulta SQL crua do relatório mensal (`ReportService.monthlyKg`) foi
-validada manualmente contra PostgreSQL real durante o desenvolvimento;
-o teste unitário cobre o mapeamento da resposta, não a query em si.
+Os testes unitários usam Prisma mockado (`vi.mock`). Os de integração
+(`backend/tests/integration`) rodam contra um PostgreSQL real e cobrem o
+ciclo completo da doação com histórico e a consulta SQL do relatório
+mensal. Eles precisam de um banco descartável já migrado:
+
+```bash
+createdb conectfome_itest
+DATABASE_URL=postgresql://conectfome:conectfome@localhost:5432/conectfome_itest npx prisma migrate deploy
+INTEGRATION_DATABASE_URL=postgresql://conectfome:conectfome@localhost:5432/conectfome_itest npm run test:integration
+```
+
+Atenção: o teste de integração apaga (`TRUNCATE`) as tabelas do banco
+indicado; nunca aponte para um banco com dados.
 
 ## Decisões conscientes (fora do escopo por opção, não por esquecimento)
 
@@ -170,7 +195,8 @@ o teste unitário cobre o mapeamento da resposta, não a query em si.
   suficiente pro fluxo de casar/coletar; foto é uma melhoria de UX, não
   uma dependência funcional.
 - **Sem cron de vencimento automático** — `VENCIDA` é uma ação manual
-  (do doador ou do admin), não um job agendado. Evita a complexidade
+  (do doador ou do admin), não um job agendado; a data fica em `expiredAt`.
+  Evita a complexidade
   operacional de um scheduler pra uma decisão que, na prática, alguém
   vai querer confirmar de qualquer forma.
 - **Voluntários não têm login** — são geridos pelo admin, como no

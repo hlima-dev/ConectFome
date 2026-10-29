@@ -1,7 +1,8 @@
-import { DonationStatus, FoodCategory, Role } from '@prisma/client'
+import { DonationAction, DonationStatus, FoodCategory, Role, StorageCondition } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
+import { donationTransition } from './donationTransition'
 
 interface CreateDonationInput {
   donorId?: string
@@ -11,10 +12,23 @@ interface CreateDonationInput {
   bestBeforeDate?: Date
   pickupWindowStart: Date
   pickupWindowEnd: Date
+  storageCondition?: StorageCondition
+  // Declaração do doador de que o alimento está próprio para consumo.
+  acceptTerms: boolean
   notes?: string
 }
 
-type UpdateDonationInput = Partial<Omit<CreateDonationInput, 'donorId'>>
+// Perecível e preparado precisam de escolha explícita da condição de
+// armazenamento; nas demais categorias o padrão (ambiente) é aceitável.
+const STORAGE_REQUIRED_FOR: FoodCategory[] = [FoodCategory.PERECIVEL, FoodCategory.PREPARADO]
+
+function assertStorageCondition(category: FoodCategory | undefined, storageCondition: StorageCondition | undefined) {
+  if (category && STORAGE_REQUIRED_FOR.includes(category) && !storageCondition) {
+    throw new ValidationError('Informe a condição de armazenamento para alimentos perecíveis ou preparados')
+  }
+}
+
+type UpdateDonationInput = Partial<Omit<CreateDonationInput, 'donorId' | 'acceptTerms'>>
 
 interface ListDonationsFilter {
   status?: DonationStatus
@@ -35,10 +49,20 @@ export class DonationService {
   async create(input: CreateDonationInput, requester: Requester) {
     const donorId = await this.resolveDonorId(input.donorId, requester)
 
+    if (input.acceptTerms !== true) {
+      throw new ValidationError('É necessário declarar que o alimento está próprio para consumo')
+    }
+    assertStorageCondition(input.category, input.storageCondition)
+
     return prisma.donation.create({
       data: {
         donorId,
         category: input.category,
+        storageCondition: input.storageCondition,
+        termsAcceptedAt: new Date(),
+        events: {
+          create: { action: DonationAction.CRIADA, fromStatus: null, toStatus: DonationStatus.DISPONIVEL, actorId: requester.id },
+        },
         description: input.description,
         estimatedQuantityKg: input.estimatedQuantityKg,
         bestBeforeDate: input.bestBeforeDate,
@@ -87,6 +111,19 @@ export class DonationService {
     return donation
   }
 
+  // Histórico da doação, do mais antigo ao mais recente. Quem pode ver a
+  // doação pode ver o histórico (mesma regra de acesso do findById).
+  async findEvents(id: string, requester: Requester) {
+    const donation = await this.getOrThrow(id)
+    await this.assertAccess(donation, requester)
+
+    return prisma.donationEvent.findMany({
+      where: { donationId: id },
+      orderBy: { createdAt: 'asc' },
+      include: { actor: { select: { id: true, name: true, role: true } } },
+    })
+  }
+
   // Só pode editar detalhes enquanto ninguém ainda se comprometeu com a
   // doação — depois de RESERVADA, mudar quantidade/janela seria enganar
   // quem já foi casado com ela.
@@ -95,6 +132,10 @@ export class DonationService {
 
     if (donation.status !== DonationStatus.DISPONIVEL) {
       throw new ValidationError('Só é possível editar uma doação enquanto ela está disponível')
+    }
+
+    if (input.category !== undefined && input.storageCondition === undefined) {
+      assertStorageCondition(input.category, undefined)
     }
 
     return prisma.donation.update({ where: { id: donation.id }, data: input })
@@ -112,10 +153,15 @@ export class DonationService {
       throw new NotFoundError('Receptor')
     }
 
-    return prisma.donation.update({
-      where: { id },
-      data: { status: DonationStatus.RESERVADA, recipientId, matchedAt: new Date() },
-    })
+    const [updated] = await prisma.$transaction([
+      ...donationTransition(
+        donation,
+        DonationAction.CASADA,
+        { status: DonationStatus.RESERVADA, recipientId, matchedAt: new Date() },
+        requester.id,
+      ),
+    ])
+    return updated
   }
 
   async cancel(id: string, requester: Requester) {
@@ -126,10 +172,15 @@ export class DonationService {
       throw new ValidationError('Essa doação não pode mais ser cancelada')
     }
 
-    return prisma.donation.update({
-      where: { id },
-      data: { status: DonationStatus.CANCELADA, canceledAt: new Date() },
-    })
+    const [updated] = await prisma.$transaction([
+      ...donationTransition(
+        donation,
+        DonationAction.CANCELADA,
+        { status: DonationStatus.CANCELADA, canceledAt: new Date() },
+        requester.id,
+      ),
+    ])
+    return updated
   }
 
   async markExpired(id: string, requester: Requester) {
@@ -140,7 +191,15 @@ export class DonationService {
       throw new ValidationError('Só é possível vencer uma doação disponível ou reservada')
     }
 
-    return prisma.donation.update({ where: { id }, data: { status: DonationStatus.VENCIDA } })
+    const [updated] = await prisma.$transaction([
+      ...donationTransition(
+        donation,
+        DonationAction.VENCIDA,
+        { status: DonationStatus.VENCIDA, expiredAt: new Date() },
+        requester.id,
+      ),
+    ])
+    return updated
   }
 
   // Ação do receptor: confirma que recebeu de fato o que o voluntário
@@ -154,10 +213,15 @@ export class DonationService {
       throw new ValidationError('Só é possível confirmar recebimento de uma doação já coletada')
     }
 
-    return prisma.donation.update({
-      where: { id },
-      data: { status: DonationStatus.ENTREGUE, confirmedAt: new Date() },
-    })
+    const [updated] = await prisma.$transaction([
+      ...donationTransition(
+        donation,
+        DonationAction.CONFIRMADA,
+        { status: DonationStatus.ENTREGUE, confirmedAt: new Date() },
+        requester.id,
+      ),
+    ])
+    return updated
   }
 
   private async getOrThrow(id: string) {

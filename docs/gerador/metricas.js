@@ -7,7 +7,7 @@ const path = require('path')
 const root = path.join(__dirname, '..', '..')
 const sh = (cmd, cwd) => execSync(cmd, { cwd, encoding: 'utf8', maxBuffer: 1 << 26 })
 const files = (dir, re) =>
-  sh(`git ls-files ${dir}`, root).split('\n').filter((f) => re.test(f))
+  sh(`git ls-files --cached --others --exclude-standard ${dir}`, root).split('\n').filter((f) => re.test(f))
 const lines = (list) => list.reduce((n, f) => n + fs.readFileSync(path.join(root, f), 'utf8').split('\n').length, 0)
 
 const out = {}

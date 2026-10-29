@@ -61,12 +61,12 @@ export class PickupRouteController {
 
   async attachDonation(req: Request, res: Response): Promise<void> {
     const { donationId } = attachDonationSchema.parse(req.body)
-    const route = await pickupRouteService.attachDonation(String(req.params.id), donationId)
+    const route = await pickupRouteService.attachDonation(String(req.params.id), donationId, req.user!.id)
     res.json(successResponse(route, 'Doação anexada à rota'))
   }
 
   async detachDonation(req: Request, res: Response): Promise<void> {
-    const route = await pickupRouteService.detachDonation(String(req.params.id), String(req.params.donationId))
+    const route = await pickupRouteService.detachDonation(String(req.params.id), String(req.params.donationId), req.user!.id)
     res.json(successResponse(route, 'Doação removida da rota'))
   }
 
@@ -77,12 +77,12 @@ export class PickupRouteController {
 
   async complete(req: Request, res: Response): Promise<void> {
     const { collectedQuantities } = completeRouteSchema.parse(req.body ?? {})
-    const route = await pickupRouteService.complete(String(req.params.id), collectedQuantities)
+    const route = await pickupRouteService.complete(String(req.params.id), collectedQuantities, req.user!.id)
     res.json(successResponse(route, 'Rota concluída — doações marcadas como coletadas'))
   }
 
   async cancel(req: Request, res: Response): Promise<void> {
-    const route = await pickupRouteService.cancel(String(req.params.id))
+    const route = await pickupRouteService.cancel(String(req.params.id), req.user!.id)
     res.json(successResponse(route, 'Rota cancelada'))
   }
 }

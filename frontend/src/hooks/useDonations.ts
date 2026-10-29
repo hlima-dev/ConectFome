@@ -4,6 +4,7 @@ import {
   confirmReceiptDonation,
   createDonation,
   getDonation,
+  getDonationEvents,
   listDonations,
   markExpiredDonation,
   matchDonation,
@@ -26,6 +27,14 @@ export function useDonation(id: string | undefined) {
   return useQuery({
     queryKey: ['donations', id],
     queryFn: () => getDonation(id!),
+    enabled: !!id,
+  })
+}
+
+export function useDonationEvents(id: string | undefined) {
+  return useQuery({
+    queryKey: ['donations', id, 'events'],
+    queryFn: () => getDonationEvents(id!),
     enabled: !!id,
   })
 }
