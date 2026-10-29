@@ -33,7 +33,7 @@ const capa = [
   c(NOME, { bold: true, size: 64, color: GREEN, after: 80 }),
   c(SUB, { size: 30, color: DARK, after: 240 }),
   c('Documentação completa do projeto', { size: 26, color: GRAY, after: 1700 }),
-  c('João Albuquerque de Meneses (RA 252930) – Líder', { size: 22 }),
+  c('João Albuquerque de Meneses (RA 252930)', { size: 22 }),
   c('Lucas Lima Santos (RA 263999)', { size: 22 }),
   c('Vitor Gimenez (RA 248707)', { size: 22, after: 300 }),
   c('Orientadora: Brenda Medina de Oliveira', { size: 22, after: 1100 }),
@@ -53,7 +53,6 @@ const s1 = [
     ['Disciplina', 'UPX2 – Usina de Projetos Experimentais II'],
     ['Curso / semestre', 'Análise e Desenvolvimento de Sistemas – 2º semestre de 2026'],
     ['Orientadora', 'Brenda Medina de Oliveira'],
-    ['Líder do grupo', 'João Albuquerque de Meneses'],
     ['Integrantes', ['João Albuquerque de Meneses – RA 252930', 'Lucas Lima Santos – RA 263999', 'Vitor Gimenez – RA 248707']],
     ['ODS relacionados', 'ODS 2 – Fome Zero e Agricultura Sustentável; ODS 12 – Consumo e Produção Responsáveis'],
     ['Código-fonte', 'github.com/hlima-dev/ConectFome (monorepo: backend/ e frontend/)'],
@@ -188,7 +187,7 @@ const s7 = [
   table(
     ['Integrante', 'RA', 'Funções acumuladas'],
     [
-      ['João Albuquerque de Meneses', '252930', 'Líder do projeto, Product Owner (PO), levantamento e organização de requisitos'],
+      ['João Albuquerque de Meneses', '252930', 'Product Owner (PO), levantamento e organização de requisitos'],
       ['Lucas Lima Santos', '263999', 'Desenvolvedor back-end, banco de dados e integração do sistema'],
       ['Vitor Gimenez', '248707', 'Desenvolvedor front-end, UI/UX e apoio em testes funcionais'],
     ],
