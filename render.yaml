@@ -21,6 +21,12 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      # Administrador inicial. Em produção o seed cria SÓ esta conta (sem os
+      # dados de demonstração, que têm senha pública). Defina uma senha forte.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: APP_URL
         sync: false
       - key: JWT_SECRET
