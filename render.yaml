@@ -31,6 +31,10 @@ services:
         sync: false
       - key: APP_URL
         sync: false
+      # Render (1) + proxy da Vercel na frente (2): o IP real do cliente vem do
+      # X-Forwarded-For, pra o limite de tentativas ser por pessoa.
+      - key: TRUST_PROXY
+        value: "2"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
