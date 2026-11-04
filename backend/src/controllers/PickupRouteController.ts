@@ -27,6 +27,9 @@ const completeRouteSchema = z.object({
         collectedQuantityKg: z.coerce.number().positive(),
       }),
     )
+    // Teto defensivo: uma rota real tem poucas doações (e listas enormes são o
+    // vetor do aviso de memória do zod).
+    .max(200)
     .optional(),
 })
 

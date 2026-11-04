@@ -16,9 +16,7 @@ const createDonationSchema = z.object({
   pickupWindowStart: z.coerce.date(),
   pickupWindowEnd: z.coerce.date(),
   storageCondition: z.nativeEnum(StorageCondition).optional(),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: 'É necessário declarar que o alimento está próprio para consumo' }),
-  }),
+  acceptTerms: z.literal(true, { message: 'É necessário declarar que o alimento está próprio para consumo' }),
   notes: z.string().optional(),
 })
 
