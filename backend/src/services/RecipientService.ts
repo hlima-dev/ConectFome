@@ -2,6 +2,7 @@ import { RecipientType, Role } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { ForbiddenError, NotFoundError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
+import { geocoder, touchesAddress } from './GeocodingService'
 
 interface CreateRecipientInput {
   name: string
@@ -31,7 +32,10 @@ interface Requester {
 
 export class RecipientService {
   async create(input: CreateRecipientInput) {
-    return prisma.recipient.create({ data: input })
+    const created = await prisma.recipient.create({ data: input })
+    // Sem await: a resposta não espera o serviço de mapas (melhor esforço).
+    if (touchesAddress(input)) void geocoder.geocodeStoredProfile('recipient', created.id)
+    return created
   }
 
   async findAll(filter: ListRecipientsFilter, pagination: PaginationParams) {
@@ -62,7 +66,14 @@ export class RecipientService {
 
   async update(id: string, input: UpdateRecipientInput, requester: Requester) {
     const recipient = await this.findById(id, requester)
-    return prisma.recipient.update({ where: { id: recipient.id }, data: input })
+    // Endereço novo invalida as coordenadas antigas até a nova geocodificação.
+    const addressChanged = touchesAddress(input)
+    const updated = await prisma.recipient.update({
+      where: { id: recipient.id },
+      data: addressChanged ? { ...input, latitude: null, longitude: null } : input,
+    })
+    if (addressChanged) void geocoder.geocodeStoredProfile('recipient', updated.id)
+    return updated
   }
 
   async deactivate(id: string) {

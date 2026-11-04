@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 import { login, saveSession } from '../services/auth'
+import { AuthShell } from '../components/AuthShell'
 import { getErrorMessage } from '../utils/errors'
 
 const schema = z.object({
@@ -38,13 +39,12 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">🍎 ConectFome</h1>
-          <p className="mt-1 text-sm text-slate-500">Doação e resgate de alimentos — entre com suas credenciais</p>
-        </div>
-
+    <AuthShell
+      headline="Juntos contra o desperdício de alimentos"
+      tagline="Quem doa e quem precisa, conectados em um só fluxo."
+      title="Bem-vindo de volta!"
+      subtitle="Entre com suas credenciais para continuar."
+    >
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
@@ -86,7 +86,6 @@ export function Login() {
             Cadastre-se
           </Link>
         </p>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

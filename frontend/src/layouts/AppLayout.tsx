@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Store, Truck, User, X } from 'lucide-react'
+import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Search, Store, Truck, User, X } from 'lucide-react'
+import { Logo } from '../components/Logo'
+import { NotificationBell } from '../components/NotificationBell'
 import { getStoredUser, logout as logoutRequest } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
 import type { Role } from '../types/auth'
@@ -33,6 +35,7 @@ const navSections: NavSection[] = [
   {
     title: 'Operação',
     items: [
+      { label: 'Oportunidades', path: '/oportunidades', icon: Search, roles: ['RECEPTOR'] },
       { label: 'Doações', path: '/doacoes', icon: Package },
       { label: 'Rotas de coleta', path: '/rotas', icon: Truck, roles: ['ADMIN'] },
     ],
@@ -63,17 +66,17 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden print:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-emerald-950 text-emerald-50 transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 print:hidden transform bg-emerald-950 text-emerald-50 transition-transform lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            🍎 ConectFome
+          <Link to="/" aria-label="ConectaFome, painel">
+            <Logo tone="light" size={30} />
           </Link>
           <button
             type="button"
@@ -123,7 +126,7 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 print:hidden">
           <button
             type="button"
             className="text-slate-500 hover:text-slate-900 lg:hidden"
@@ -133,10 +136,19 @@ export function AppLayout() {
           </button>
 
           <div className="ml-auto flex items-center gap-4">
+            <NotificationBell />
             {user && (
-              <div className="text-right leading-tight">
-                <p className="text-sm font-medium text-slate-900">{user.name}</p>
-                <p className="text-xs text-slate-500">{ROLE_LABELS[user.role] ?? user.role}</p>
+              <div className="flex items-center gap-3">
+                <div className="hidden text-right leading-tight sm:block">
+                  <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                  <p className="text-xs text-slate-500">{ROLE_LABELS[user.role] ?? user.role}</p>
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-800 text-sm font-semibold text-white"
+                >
+                  {user.name.trim().charAt(0).toUpperCase()}
+                </span>
               </div>
             )}
             <button

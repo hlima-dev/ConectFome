@@ -35,6 +35,45 @@ export interface VehicleInput {
 
 export type PickupRouteStatus = 'PLANEJADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
 
+export interface RouteStopDonation {
+  id: string
+  description: string
+  estimatedKg: number
+  deadline: string | null
+}
+
+export interface RouteStop {
+  donorId: string
+  donorName: string
+  address: string | null
+  city: string | null
+  latitude: number | null
+  longitude: number | null
+  donations: RouteStopDonation[]
+}
+
+// Parada com coordenadas, já na ordem sugerida.
+export interface PlannedStop extends RouteStop {
+  latitude: number
+  longitude: number
+  sequence: number
+  legKm: number
+}
+
+export interface RoutePlan {
+  stops: PlannedStop[]
+  totalKm: number
+  unlocated: RouteStop[]
+  recipients: { id: string; name: string; address: string | null; latitude: number; longitude: number }[]
+}
+
+export interface VehicleLoad {
+  totalKg: number
+  capacityKg: number | null
+  exceeds: boolean
+  remainingKg: number | null
+}
+
 export interface PickupRoute {
   id: string
   routeNumber: number
@@ -49,8 +88,16 @@ export interface PickupRoute {
   canceledAt: string | null
   notes: string | null
   donations: Donation[]
+  // Só no detalhe da rota (GET /pickup-routes/:id e respostas das ações).
+  load?: VehicleLoad
+  plan?: RoutePlan
   createdAt: string
   updatedAt: string
+}
+
+export interface CollectedQuantity {
+  donationId: string
+  collectedQuantityKg: number
 }
 
 export interface PickupRouteInput {

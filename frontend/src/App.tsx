@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { PrivateRoute } from './routes/PrivateRoute'
 import { RoleRoute } from './routes/RoleRoute'
 import { AppLayout } from './layouts/AppLayout'
+import { Landing } from './pages/Landing'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
@@ -9,6 +10,8 @@ import { DonorsPage } from './pages/donors/DonorsPage'
 import { RecipientsPage } from './pages/recipients/RecipientsPage'
 import { DonationsPage } from './pages/donations/DonationsPage'
 import { DonationDetailPage } from './pages/donations/DonationDetailPage'
+import { ReceiptPage } from './pages/donations/ReceiptPage'
+import { OpportunitiesPage } from './pages/donations/OpportunitiesPage'
 import { VolunteersPage } from './pages/logistics/VolunteersPage'
 import { VehiclesPage } from './pages/logistics/VehiclesPage'
 import { PickupRoutesPage } from './pages/logistics/PickupRoutesPage'
@@ -19,6 +22,7 @@ import { ReportsPage } from './pages/reports/ReportsPage'
 function App() {
   return (
     <Routes>
+      <Route path="/inicio" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Register />} />
 
@@ -47,8 +51,24 @@ function App() {
             </RoleRoute>
           }
         />
+        <Route
+          path="oportunidades"
+          element={
+            <RoleRoute roles={['RECEPTOR']}>
+              <OpportunitiesPage />
+            </RoleRoute>
+          }
+        />
         <Route path="doacoes" element={<DonationsPage />} />
         <Route path="doacoes/:id" element={<DonationDetailPage />} />
+        <Route
+          path="doacoes/:id/comprovante"
+          element={
+            <RoleRoute roles={['ADMIN', 'DOADOR']}>
+              <ReceiptPage />
+            </RoleRoute>
+          }
+        />
         <Route
           path="voluntarios"
           element={

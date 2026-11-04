@@ -21,6 +21,9 @@ const mockPrisma = vi.hoisted(() => ({
 
 vi.mock('../src/config/prisma', () => ({ prisma: mockPrisma }))
 
+const geocodeStoredProfile = vi.hoisted(() => vi.fn())
+vi.mock('../src/services/GeocodingService', () => ({ geocoder: { geocodeStoredProfile } }))
+
 // A mesma senha em hash real (bcrypt), usada em vários testes.
 const PLAIN_PASSWORD = 'Senha@1234'
 const PASSWORD_HASH = bcrypt.hashSync(PLAIN_PASSWORD, 4)
@@ -139,6 +142,8 @@ describe('AuthService.register', () => {
     vi.clearAllMocks()
     authService = new AuthService()
     mockPrisma.user.update.mockResolvedValue({})
+    mockPrisma.donor.create.mockResolvedValue({ id: 'donor_1' })
+    mockPrisma.recipient.create.mockResolvedValue({ id: 'recipient_1' })
     // Simula prisma.$transaction(async (tx) => ...) chamando o callback
     // com o próprio mockPrisma como "tx" (mesmos métodos mockados).
     mockPrisma.$transaction.mockImplementation(async (callback: (tx: typeof mockPrisma) => unknown) =>
@@ -208,5 +213,7 @@ describe('AuthService.register', () => {
       data: { name: 'Mercado Novo', type: 'MERCADO', userId: 'user_2' },
     })
     expect(mockPrisma.recipient.create).not.toHaveBeenCalled()
+    // as coordenadas do endereço são buscadas em segundo plano, depois do cadastro
+    expect(geocodeStoredProfile).toHaveBeenCalledWith('donor', 'donor_1')
   })
 })

@@ -11,7 +11,20 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
+  // Limites de requisições por IP a cada 15 min. Os padrões valem em produção; só
+  // aumente em ambiente de teste/captura (ex.: scripts/capturar-telas.cjs).
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
   APP_URL: z.string().url().default('http://localhost:5173'),
+  // Geocodificação (endereço -> latitude/longitude) via Nominatim/OpenStreetMap.
+  // Desligada nos testes. O serviço público limita a 1 requisição por segundo e
+  // exige um User-Agent que identifique a aplicação (sem dados pessoais).
+  GEOCODING_ENABLED: z
+    .string()
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+  GEOCODING_URL: z.string().url().default('https://nominatim.openstreetmap.org/search'),
+  GEOCODING_USER_AGENT: z.string().default('ConectaFome/1.0 (projeto academico; github.com/hlima-dev/ConectFome)'),
 })
 
 const _env = envSchema.safeParse(process.env)
@@ -22,4 +35,8 @@ if (!_env.success) {
   process.exit(1)
 }
 
-export const env = _env.data
+export const env = {
+  ..._env.data,
+  // Padrão: ligada, exceto nos testes.
+  GEOCODING_ENABLED: _env.data.GEOCODING_ENABLED ?? _env.data.NODE_ENV !== 'test',
+}

@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '../../components/Modal'
@@ -6,18 +6,30 @@ import { useCreateDonation } from '../../hooks/useDonations'
 import { useDonors } from '../../hooks/useDonors'
 import { getStoredUser } from '../../services/auth'
 import { getErrorMessage, getFieldErrors } from '../../utils/errors'
-import { FOOD_CATEGORY_LABELS } from '../../types/donations'
+import { FOOD_CATEGORY_LABELS, STORAGE_CONDITION_LABELS, STORAGE_REQUIRED_CATEGORIES } from '../../types/donations'
 
-const schema = z.object({
-  donorId: z.string().optional(),
-  category: z.enum(['PERECIVEL', 'NAO_PERECIVEL', 'PREPARADO', 'HORTIFRUTI', 'PADARIA', 'OUTRO']),
-  description: z.string().min(3, 'Descrição deve ter ao menos 3 caracteres'),
-  estimatedQuantityKg: z.coerce.number().positive('Quantidade deve ser maior que zero'),
-  bestBeforeDate: z.string().optional(),
-  pickupWindowStart: z.string().min(1, 'Informe o início da janela de coleta'),
-  pickupWindowEnd: z.string().min(1, 'Informe o fim da janela de coleta'),
-  notes: z.string().optional(),
-})
+const schema = z
+  .object({
+    donorId: z.string().optional(),
+    category: z.enum(['PERECIVEL', 'NAO_PERECIVEL', 'PREPARADO', 'HORTIFRUTI', 'PADARIA', 'OUTRO']),
+    description: z.string().min(3, 'Descrição deve ter ao menos 3 caracteres'),
+    estimatedQuantityKg: z.coerce.number().positive('Quantidade deve ser maior que zero'),
+    bestBeforeDate: z.string().optional(),
+    pickupWindowStart: z.string().min(1, 'Informe o início da janela de coleta'),
+    pickupWindowEnd: z.string().min(1, 'Informe o fim da janela de coleta'),
+    storageCondition: z.enum(['AMBIENTE', 'REFRIGERADO', 'CONGELADO', '']).optional(),
+    acceptTerms: z.boolean().refine((value) => value, 'Confirme que o alimento está próprio para consumo'),
+    notes: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (STORAGE_REQUIRED_CATEGORIES.includes(values.category) && !values.storageCondition) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['storageCondition'],
+        message: 'Informe como o alimento fica armazenado até a coleta',
+      })
+    }
+  })
 
 type FormInput = z.input<typeof schema>
 type FormValues = z.output<typeof schema>
@@ -36,11 +48,14 @@ export function DonationFormModal({ onClose }: DonationFormModalProps) {
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { category: 'OUTRO' },
+    defaultValues: { category: 'OUTRO', storageCondition: '', acceptTerms: false },
   })
+  const category = useWatch({ control, name: 'category' })
+  const storageRequired = STORAGE_REQUIRED_CATEGORIES.includes(category)
 
   async function onSubmit(values: FormValues) {
     try {
@@ -52,6 +67,8 @@ export function DonationFormModal({ onClose }: DonationFormModalProps) {
         bestBeforeDate: values.bestBeforeDate || undefined,
         pickupWindowStart: new Date(values.pickupWindowStart).toISOString(),
         pickupWindowEnd: new Date(values.pickupWindowEnd).toISOString(),
+        storageCondition: values.storageCondition || undefined,
+        acceptTerms: true,
         notes: values.notes || undefined,
       })
       onClose()
@@ -165,10 +182,34 @@ export function DonationFormModal({ onClose }: DonationFormModalProps) {
         </div>
 
         <div>
+          <label htmlFor="donation-storageCondition" className="mb-1 block text-sm font-medium text-slate-700">
+            Armazenamento até a coleta
+            {!storageRequired && <span className="font-normal text-slate-400"> (opcional)</span>}
+          </label>
+          <select id="donation-storageCondition" className="input" {...register('storageCondition')}>
+            <option value="">{storageRequired ? 'Selecione' : 'Temperatura ambiente (padrão)'}</option>
+            {Object.entries(STORAGE_CONDITION_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {errors.storageCondition && <p className="mt-1 text-xs text-red-600">{errors.storageCondition.message}</p>}
+        </div>
+
+        <div>
           <label htmlFor="donation-notes" className="mb-1 block text-sm font-medium text-slate-700">
             Observações <span className="font-normal text-slate-400">(opcional)</span>
           </label>
           <textarea id="donation-notes" className="input" rows={2} {...register('notes')} />
+        </div>
+
+        <div>
+          <label className="flex items-start gap-2 text-sm text-slate-700">
+            <input type="checkbox" className="mt-0.5" {...register('acceptTerms')} />
+            <span>Declaro que este alimento está próprio para consumo e dentro do prazo de validade.</span>
+          </label>
+          {errors.acceptTerms && <p className="mt-1 text-xs text-red-600">{errors.acceptTerms.message}</p>}
         </div>
 
         {errors.root && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.root.message}</p>}

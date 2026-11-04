@@ -2,6 +2,7 @@ import { DonorType, Role } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { ForbiddenError, NotFoundError } from '../utils/AppError'
 import { paginate, PaginationParams } from '../utils/pagination'
+import { geocoder, touchesAddress } from './GeocodingService'
 
 interface CreateDonorInput {
   name: string
@@ -32,7 +33,10 @@ export class DonorService {
   // Cadastro pelo admin — o outro jeito de virar doador é o cadastro
   // público (AuthService.register), que já vincula um User.
   async create(input: CreateDonorInput) {
-    return prisma.donor.create({ data: input })
+    const created = await prisma.donor.create({ data: input })
+    // Sem await: a resposta não espera o serviço de mapas (melhor esforço).
+    if (touchesAddress(input)) void geocoder.geocodeStoredProfile('donor', created.id)
+    return created
   }
 
   async findAll(filter: ListDonorsFilter, pagination: PaginationParams) {
@@ -63,7 +67,14 @@ export class DonorService {
 
   async update(id: string, input: UpdateDonorInput, requester: Requester) {
     const donor = await this.findById(id, requester)
-    return prisma.donor.update({ where: { id: donor.id }, data: input })
+    // Endereço novo invalida as coordenadas antigas até a nova geocodificação.
+    const addressChanged = touchesAddress(input)
+    const updated = await prisma.donor.update({
+      where: { id: donor.id },
+      data: addressChanged ? { ...input, latitude: null, longitude: null } : input,
+    })
+    if (addressChanged) void geocoder.geocodeStoredProfile('donor', updated.id)
+    return updated
   }
 
   async deactivate(id: string) {

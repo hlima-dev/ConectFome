@@ -10,7 +10,7 @@ import {
   startPickupRoute,
   updatePickupRoute,
 } from '../services/pickupRoutes'
-import type { PickupRouteInput, PickupRouteStatus } from '../types/logistics'
+import type { CollectedQuantity, PickupRouteInput, PickupRouteStatus } from '../types/logistics'
 
 export function usePickupRoutes(filters?: { status?: PickupRouteStatus; vehicleId?: string; volunteerId?: string }) {
   return useQuery({
@@ -43,7 +43,7 @@ export function useUpdatePickupRoute(id: string) {
   })
 }
 
-function useRouteAction(mutationFn: () => Promise<unknown>) {
+function useRouteAction<TVariables = void>(mutationFn: (variables: TVariables) => Promise<unknown>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
@@ -81,7 +81,8 @@ export function useStartRoute(id: string) {
 }
 
 export function useCompleteRoute(id: string) {
-  return useRouteAction(() => completePickupRoute(id))
+  // Quantidades realmente coletadas (opcional): sem elas vale a estimada.
+  return useRouteAction((collectedQuantities?: CollectedQuantity[]) => completePickupRoute(id, collectedQuantities))
 }
 
 export function useCancelRoute(id: string) {

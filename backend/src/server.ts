@@ -5,7 +5,7 @@ import { prisma } from './config/prisma'
 const BANNER = `
 ╔══════════════════════════════════════════════╗
 ║                                              ║
-║   🍎  C O N E C T F O M E   A P I   v1.0    ║
+║   🍎  C O N E C T A F O M E   A P I   v1.0    ║
 ║   Doação e resgate de alimentos — ODS 2/12   ║
 ║                                              ║
 ╚══════════════════════════════════════════════╝

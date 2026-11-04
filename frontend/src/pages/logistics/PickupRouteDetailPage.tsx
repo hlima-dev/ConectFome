@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { RoutePlanPanel } from '../../components/RoutePlanPanel'
 import { StatusBadge } from '../../components/StatusBadge'
 import {
   useAttachDonation,
@@ -15,6 +16,7 @@ import { useDonations } from '../../hooks/useDonations'
 import { DONATION_STATUS_LABELS, DONATION_STATUS_TONES } from '../../types/donations'
 import { PICKUP_ROUTE_STATUS_LABELS, PICKUP_ROUTE_STATUS_TONES } from '../../types/logistics'
 import { getErrorMessage } from '../../utils/errors'
+import { formatKg } from '../../utils/format'
 
 function formatDate(value: string | null) {
   if (!value) return '—'
@@ -27,6 +29,8 @@ export function PickupRouteDetailPage() {
   const { data: route, isLoading, error: fetchError } = usePickupRoute(id)
 
   const [attachId, setAttachId] = useState('')
+  // Quantidades coletadas digitadas (por doação); vazio = vale a estimada.
+  const [collected, setCollected] = useState<Record<string, string>>({})
   const [canceling, setCanceling] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,6 +79,14 @@ export function PickupRouteDetailPage() {
     } catch (err) {
       setError(getErrorMessage(err))
     }
+  }
+
+  // Só envia o que foi digitado e é válido; o resto fica com a quantidade estimada.
+  function collectedQuantities() {
+    const entries = Object.entries(collected)
+      .map(([donationId, value]) => ({ donationId, collectedQuantityKg: Number(value) }))
+      .filter((entry) => Number.isFinite(entry.collectedQuantityKg) && entry.collectedQuantityKg > 0)
+    return entries.length > 0 ? entries : undefined
   }
 
   async function handleAttach() {
@@ -133,6 +145,8 @@ export function PickupRouteDetailPage() {
         )}
       </div>
 
+      {route.plan && route.load && <RoutePlanPanel plan={route.plan} load={route.load} />}
+
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
         <h2 className="mb-3 text-base font-semibold text-slate-900">Doações anexadas ({route.donations.length})</h2>
 
@@ -147,6 +161,7 @@ export function PickupRouteDetailPage() {
                   <th className="py-2">Doador</th>
                   <th className="py-2">Receptor</th>
                   <th className="py-2">Status</th>
+                  <th className="py-2">{isOngoing ? 'Kg coletado' : 'Kg'}</th>
                   {isPlanned && <th className="py-2 text-right">Ação</th>}
                 </tr>
               </thead>
@@ -161,6 +176,22 @@ export function PickupRouteDetailPage() {
                         label={DONATION_STATUS_LABELS[donation.status]}
                         tone={DONATION_STATUS_TONES[donation.status]}
                       />
+                    </td>
+                    <td className="py-2">
+                      {isOngoing ? (
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          aria-label={`Kg coletado de ${donation.description}`}
+                          className="input w-24"
+                          placeholder={String(donation.estimatedQuantityKg)}
+                          value={collected[donation.id] ?? ''}
+                          onChange={(e) => setCollected((prev) => ({ ...prev, [donation.id]: e.target.value }))}
+                        />
+                      ) : (
+                        formatKg(donation.collectedQuantityKg ?? donation.estimatedQuantityKg)
+                      )}
                     </td>
                     {isPlanned && (
                       <td className="py-2 text-right">
@@ -218,7 +249,8 @@ export function PickupRouteDetailPage() {
             <button
               type="button"
               onClick={() => runAction(() => startRoute.mutateAsync())}
-              disabled={startRoute.isPending}
+              disabled={startRoute.isPending || route.load?.exceeds}
+              title={route.load?.exceeds ? 'O peso estimado passa da capacidade do veículo' : undefined}
               className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
             >
               {startRoute.isPending ? 'Iniciando...' : 'Iniciar rota'}
@@ -236,7 +268,7 @@ export function PickupRouteDetailPage() {
         {isOngoing && (
           <button
             type="button"
-            onClick={() => runAction(() => completeRoute.mutateAsync())}
+            onClick={() => runAction(() => completeRoute.mutateAsync(collectedQuantities()))}
             disabled={completeRoute.isPending}
             className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
           >

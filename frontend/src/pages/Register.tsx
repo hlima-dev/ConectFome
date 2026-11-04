@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserPlus } from 'lucide-react'
+import { HeartHandshake, Store, UserPlus } from 'lucide-react'
 import { register as registerRequest, saveSession } from '../services/auth'
+import { AuthShell } from '../components/AuthShell'
 import { getErrorMessage, getFieldErrors } from '../utils/errors'
 import { DONOR_TYPE_LABELS, RECIPIENT_TYPE_LABELS } from '../types/auth'
 
@@ -27,11 +28,13 @@ const schema = z
 
     donorName: z.string().optional(),
     donorType: z.enum(['MERCADO', 'RESTAURANTE', 'FEIRA', 'OUTRO']).optional(),
+    donorAddress: z.string().optional(),
     donorCity: z.string().optional(),
     donorState: z.string().optional(),
 
     recipientName: z.string().optional(),
     recipientType: z.enum(['ONG', 'FAMILIA']).optional(),
+    recipientAddress: z.string().optional(),
     recipientCity: z.string().optional(),
     recipientState: z.string().optional(),
     // União com '' — sem isso, campo vazio coage pra 0/NaN e falha o
@@ -85,6 +88,7 @@ export function Register() {
             ? {
                 name: values.donorName!,
                 type: values.donorType ?? 'OUTRO',
+                address: values.donorAddress || undefined,
                 city: values.donorCity || undefined,
                 state: values.donorState || undefined,
               }
@@ -94,6 +98,7 @@ export function Register() {
             ? {
                 name: values.recipientName!,
                 type: values.recipientType ?? 'ONG',
+                address: values.recipientAddress || undefined,
                 city: values.recipientCity || undefined,
                 state: values.recipientState || undefined,
                 peopleServed:
@@ -118,31 +123,32 @@ export function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">🍎 ConectFome</h1>
-          <p className="mt-1 text-sm text-slate-500">Cadastre-se como doador ou receptor</p>
-        </div>
-
+    <AuthShell
+      headline="Faça parte dessa corrente do bem!"
+      tagline="Doe, receba e ajude a transformar excedente em refeição."
+      title="Criar conta"
+      subtitle="Cadastre-se como doador ou receptor."
+    >
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Eu sou</label>
             <div className="grid grid-cols-2 gap-3">
               <label
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm font-medium ${
-                  role === 'DOADOR' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-600'
+                className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border px-3 py-3 text-center text-sm font-medium transition-colors ${
+                  role === 'DOADOR' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-300 text-slate-600 hover:border-emerald-400'
                 }`}
               >
                 <input type="radio" value="DOADOR" className="sr-only" {...register('role')} />
+                <Store size={22} aria-hidden="true" />
                 Doador (mercado, restaurante, feira)
               </label>
               <label
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm font-medium ${
-                  role === 'RECEPTOR' ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-600'
+                className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border px-3 py-3 text-center text-sm font-medium transition-colors ${
+                  role === 'RECEPTOR' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-300 text-slate-600 hover:border-emerald-400'
                 }`}
               >
                 <input type="radio" value="RECEPTOR" className="sr-only" {...register('role')} />
+                <HeartHandshake size={22} aria-hidden="true" />
                 Receptor (ONG, família)
               </label>
             </div>
@@ -196,6 +202,12 @@ export function Register() {
                   </label>
                   <input id="donorName" className="input" {...register('donorName')} />
                   {errors.donorName && <p className="mt-1 text-xs text-red-600">{errors.donorName.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="donorAddress" className="mb-1 block text-sm font-medium text-slate-700">
+                    Endereço <span className="font-normal text-slate-400">(rua e número; usado para o mapa das rotas)</span>
+                  </label>
+                  <input id="donorAddress" autoComplete="street-address" className="input" {...register('donorAddress')} />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
@@ -268,6 +280,12 @@ export function Register() {
                     )}
                   </div>
                 </div>
+                <div>
+                  <label htmlFor="recipientAddress" className="mb-1 block text-sm font-medium text-slate-700">
+                    Endereço <span className="font-normal text-slate-400">(rua e número; usado para o mapa das rotas)</span>
+                  </label>
+                  <input id="recipientAddress" autoComplete="street-address" className="input" {...register('recipientAddress')} />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
                     <label htmlFor="recipientCity" className="mb-1 block text-sm font-medium text-slate-700">
@@ -304,7 +322,6 @@ export function Register() {
             Entrar
           </Link>
         </p>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

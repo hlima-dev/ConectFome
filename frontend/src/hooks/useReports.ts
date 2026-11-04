@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getByDonor, getByRecipient, getMonthlyKg, getSummary } from '../services/reports'
+import { getByDonor, getByRecipient, getMonthlyKg, getRates, getSummary } from '../services/reports'
+import type { ReportPeriod } from '../types/reports'
 
 export function useMonthlyKg(filters?: { year?: number; donorId?: string; recipientId?: string }) {
   return useQuery({
@@ -27,5 +28,12 @@ export function useReportSummary(options?: { enabled?: boolean }) {
     queryKey: ['reports', 'summary'],
     queryFn: () => getSummary(),
     enabled: options?.enabled ?? true,
+  })
+}
+
+export function useRates(period?: ReportPeriod) {
+  return useQuery({
+    queryKey: ['reports', 'rates', period],
+    queryFn: () => getRates(period),
   })
 }

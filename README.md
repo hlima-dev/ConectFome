@@ -12,7 +12,7 @@ Todos os dias, mercados, restaurantes e feiras descartam alimentos em
 condições de consumo — só não vendáveis pelo padrão estético ou pelo
 prazo comercial, não pela segurança alimentar. Do outro lado, ONGs e
 famílias em vulnerabilidade enfrentam insegurança alimentar diária. O
-ConectFome existe para fechar essa distância: cadastro de doadores e
+ConectaFome existe para fechar essa distância: cadastro de doadores e
 receptores, agendamento de coleta com rotas e voluntários, e um
 relatório de quanto alimento foi efetivamente resgatado por mês.
 
@@ -22,7 +22,7 @@ relatório de quanto alimento foi efetivamente resgatado por mês.
   evento registrado e mensurável, não uma promessa.
 - **ODS 12 — Consumo e Produção Responsáveis**: o alimento resgatado é
   produção que já aconteceu — energia, água e trabalho já gastos — que
-  o ConectFome evita jogar fora. O relatório de kg resgatado por mês
+  o ConectaFome evita jogar fora. O relatório de kg resgatado por mês
   (`/relatorios`) é o indicador direto desse impacto, e o estado
   `VENCIDA` existe para tornar visível, e não esconder, o que ainda se
   perde antes da coleta.
@@ -39,7 +39,7 @@ não código copiado, já que os stacks de origem são diferentes.
 conectfome/
 ├── backend/                  # Node + Express + TypeScript + Prisma + PostgreSQL
 │   ├── prisma/
-│   │   ├── schema.prisma     # 8 modelos, 6 enums
+│   │   ├── schema.prisma     # 9 modelos, 8 enums
 │   │   └── seed.ts           # dados de exemplo (idempotente)
 │   ├── src/
 │   │   ├── config/           # env (Zod) e cliente Prisma
@@ -81,7 +81,9 @@ DISPONÍVEL → RESERVADA → AGENDADA → COLETADA → ENTREGUE
 ```
 
 - **DISPONÍVEL**: o doador cadastrou, ainda sem receptor.
-- **RESERVADA**: o admin casou a doação com um receptor.
+- **RESERVADA**: um receptor ficou com a doação — ou ele mesmo reservou
+  pelo painel de Oportunidades, ou o admin casou (e pode reatribuir). O
+  receptor pode liberar a reserva enquanto a doação não estiver numa rota.
 - **AGENDADA**: entrou numa rota de coleta planejada.
 - **COLETADA**: a rota foi concluída — o voluntário coletou de fato.
   **Esse é o evento que conta como "resgatado" no relatório.**
@@ -91,19 +93,89 @@ DISPONÍVEL → RESERVADA → AGENDADA → COLETADA → ENTREGUE
   registrando o que não virou resgate — o contraste com o que foi
   resgatado é, em si, parte do indicador de ODS 12.
 
-Cada estado é uma ação distinta e rastreável (quem fez, quando), em vez
-de um único campo "concluído" — é isso que permite ao relatório separar
-"resgatado" de "entregue" de "perdido".
+Cada estado é uma ação distinta e rastreável, em vez de um único campo
+"concluído" — é isso que permite ao relatório separar "resgatado" de
+"entregue" de "perdido".
+
+**Histórico (quem fez, quando).** Toda transição grava um `DonationEvent`
+(ação, estado de origem e destino, usuário, data) na mesma transação que
+muda o estado, e a tela da doação mostra a linha do tempo
+(`GET /api/v1/donations/:id/events`). Doações anteriores à existência do
+histórico não têm eventos.
+
+**Urgência.** Cada doação ainda não coletada traz `urgency`: o prazo é o
+que vencer primeiro entre a validade (até o fim do dia) e o fim da janela
+de coleta; abaixo de 24 h é "urgente" e passado o prazo é "encerrado".
+Doações com prazo encerrado somem do painel de oportunidades e não podem
+ser reservadas (cabe ao doador ou ao admin marcá-las como vencidas).
+
+**Reserva sem corrida.** A reserva pelo receptor é uma troca de estado
+condicional (só se ainda estiver DISPONÍVEL) dentro de uma transação: se
+duas ONGs reservam ao mesmo tempo, uma vence e a outra recebe 409. Há teste
+de integração para isso.
+
+**Notificações.** Geradas depois que a transição já foi gravada e em
+regime de melhor esforço: uma falha ao notificar nunca desfaz a ação. Não
+avisam o autor da ação. Uma nova doação avisa os receptores ativos da
+mesma cidade do doador (todos, se o doador não informou cidade) e os
+administradores. A interface consulta a cada 30 s.
+
+**Rota com mapa.** O detalhe da rota (`GET /api/v1/pickup-routes/:id`) traz
+`plan` e `load`. As paradas são os doadores (várias doações do mesmo doador
+= uma parada), ordenadas por **vizinho mais próximo** a partir da parada de
+prazo mais curto, com distância em **linha reta** (haversine). É uma
+heurística de apoio à decisão: não considera ruas, trânsito nem janelas de
+tempo e não garante a rota mais curta. Doadores sem coordenadas aparecem em
+um aviso, fora do mapa e da distância.
+
+**Capacidade do veículo.** A tela mostra a carga estimada contra
+`capacityKg`; anexar acima da capacidade é permitido (com alerta), mas
+**iniciar a rota** é bloqueado. Veículo sem capacidade cadastrada não é
+verificado. Ao concluir, o administrador pode informar o kg realmente
+coletado de cada doação (o padrão é a quantidade estimada).
+
+**Geocodificação.** Ao criar ou alterar o endereço de um doador/receptor, o
+backend busca latitude/longitude no Nominatim (OpenStreetMap) **em segundo
+plano**, sem atrasar a resposta; falha nunca impede o cadastro. O serviço
+público limita a 1 requisição por segundo e exige identificação
+(`GEOCODING_USER_AGENT`), por isso há fila com intervalo mínimo e cache.
+Variáveis: `GEOCODING_ENABLED` (padrão: ligada, exceto nos testes),
+`GEOCODING_URL`, `GEOCODING_USER_AGENT`. Para preencher cadastros
+existentes: `npm run db:geocode`. Os testes usam um servidor HTTP local no
+lugar do Nominatim; **não** há teste automatizado contra o serviço real.
+
+**Comprovante.** `GET /api/v1/donations/:id/receipt` (administrador ou o
+doador dono) devolve os dados do comprovante de uma doação **já coletada**; a
+tela `/doacoes/:id/comprovante` o mostra para imprimir ou salvar em PDF pelo
+navegador. É um documento do sistema, sem valor fiscal.
+
+**Indicadores e exportação.** `GET /api/v1/reports/rates?from=&to=` (datas
+AAAA-MM-DD, fim inclusivo, por data de registro da doação) devolve taxas de
+resgate, perda e entrega (frações, ou `null` sem base de cálculo), kg
+resgatado e perdido, tempo médio até a coleta (ignora coleta anterior ao
+registro) e pessoas atendidas (soma de `peopleServed` das instituições com ao
+menos uma entrega no período, cada uma contada uma vez).
+`GET /api/v1/reports/donations.csv` exporta as doações do período em CSV
+para Excel em português (`;`, decimal com vírgula, BOM UTF-8, datas em
+horário de Brasília), com proteção contra injeção de fórmula nos campos
+livres.
+
+**Segurança sanitária.** O doador declara que o alimento está próprio para
+consumo (a data da declaração fica registrada) e informa a condição de
+armazenamento até a coleta — obrigatória para perecíveis e preparados. É
+uma declaração: o sistema não mede temperatura.
 
 ## Módulos
 
 | Módulo | O que faz | Quem acessa |
 |---|---|---|
 | Doadores / Receptores | Cadastro, edição e desativação (soft delete) | ADMIN (CRUD completo); o próprio dono vê/edita seu cadastro |
-| Doações | Criar, casar com receptor, cancelar, marcar vencida, confirmar recebimento | DOADOR (as próprias), RECEPTOR (as suas), ADMIN (todas) |
+| Doações | Criar, casar/reatribuir, cancelar, marcar vencida, confirmar recebimento, histórico | DOADOR (as próprias), RECEPTOR (as suas), ADMIN (todas) |
+| Oportunidades | Painel das doações disponíveis, da mais urgente para a menos, com filtro por cidade e categoria; reservar e liberar | RECEPTOR |
+| Notificações | Sino com avisos dos eventos da doação (nova doação, reserva, rota, coleta, entrega, cancelamento) | Todos (cada um vê só as suas) |
 | Voluntários / Veículos | Cadastro simples, com edição | ADMIN |
-| Rotas de coleta | Criar, anexar/desanexar doação, iniciar, concluir, cancelar | ADMIN |
-| Relatórios | Kg resgatado por mês, por doador, por receptor, resumo de KPIs | ADMIN |
+| Rotas de coleta | Criar, anexar/desanexar doação, mapa e ordem sugerida das paradas, carga x capacidade, iniciar, concluir (com kg coletado), cancelar | ADMIN |
+| Relatórios | Kg resgatado por mês, por doador e por receptor, taxas do período, tempo até a coleta, pessoas atendidas, exportação CSV | ADMIN |
 
 ## Setup local
 
@@ -132,9 +204,14 @@ npm install
 npm run dev                 # http://localhost:5173
 ```
 
-### Credenciais de exemplo (seed)
+### Credenciais de exemplo (seed) — só para desenvolvimento
 
-Senha de todas as contas: `Conect@123`
+Senha de todas as contas: `Conect@123`. **Essa senha é pública.** Em
+`NODE_ENV=production` o seed **não** cria essas contas: cria apenas o
+administrador definido em `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mínimo de 12
+caracteres, diferente da senha pública) e falha se faltarem. Para uma demo
+pública com dados de exemplo é preciso optar explicitamente com
+`SEED_DEMO=true`.
 
 | Papel | E-mail | Perfil |
 |---|---|---|
@@ -148,35 +225,53 @@ O seed também cria 2 voluntários, 2 veículos e doações de exemplo em
 `DISPONÍVEL`, `RESERVADA`, `VENCIDA` e uma já `ENTREGUE` no mês
 anterior (pra o gráfico de relatório mostrar mais de um mês).
 
+## Publicação
+
+Veja [DEPLOY.md](DEPLOY.md) (Supabase + Render + Vercel) e `scripts/smoke.sh`.
+
 ## Testes
 
 ```bash
-cd backend  && npm run test   # 81 testes — services e middlewares
-cd frontend && npm run test   # testes de componente (Login/Register)
+cd backend  && npm run test              # unitários (Prisma simulado) — services e middlewares
+cd backend  && npm run test:integration  # contra PostgreSQL real (ver abaixo)
+cd frontend && npm run test              # testes de componente
 ```
 
-Escopo deliberado: testes unitários com Prisma mockado (`vi.mock`),
-sem integração com banco real — a mesma escolha do projeto ATHLO. A
-consulta SQL crua do relatório mensal (`ReportService.monthlyKg`) foi
-validada manualmente contra PostgreSQL real durante o desenvolvimento;
-o teste unitário cobre o mapeamento da resposta, não a query em si.
+Os testes unitários usam Prisma mockado (`vi.mock`). Os de integração
+(`backend/tests/integration`) rodam contra um PostgreSQL real e cobrem o
+ciclo completo da doação com histórico, reserva concorrente, notificações,
+plano de rota e capacidade, indicadores e CSV (SQL real) e a **API pela rede**
+(Express de verdade): autenticação, CSRF e a matriz de permissões por papel. Eles precisam de um banco descartável já migrado:
+
+```bash
+createdb conectfome_itest
+DATABASE_URL=postgresql://conectfome:conectfome@localhost:5432/conectfome_itest npx prisma migrate deploy
+INTEGRATION_DATABASE_URL=postgresql://conectfome:conectfome@localhost:5432/conectfome_itest npm run test:integration
+```
+
+Atenção: o teste de integração apaga (`TRUNCATE`) as tabelas do banco
+indicado; nunca aponte para um banco com dados.
 
 ## Decisões conscientes (fora do escopo por opção, não por esquecimento)
 
 - **Sem verificação de e-mail nem recuperação de senha por e-mail** —
   reduz a superfície de configuração (sem provedor de e-mail) sem
   comprometer a demonstração do fluxo principal.
+- **Sem otimização de rota "de verdade"** — vizinho mais próximo e linha
+  reta bastam para rotas curtas; um solver com ruas e janelas de tempo fica
+  como evolução.
 - **Sem upload de foto da doação** — o texto da descrição já é
   suficiente pro fluxo de casar/coletar; foto é uma melhoria de UX, não
   uma dependência funcional.
 - **Sem cron de vencimento automático** — `VENCIDA` é uma ação manual
-  (do doador ou do admin), não um job agendado. Evita a complexidade
+  (do doador ou do admin), não um job agendado; a data fica em `expiredAt`.
+  Evita a complexidade
   operacional de um scheduler pra uma decisão que, na prática, alguém
   vai querer confirmar de qualquer forma.
 - **Voluntários não têm login** — são geridos pelo admin, como no
   `Driver` do projeto de referência (PRODUCTION ERP); no mundo real,
   esse público tende a operar por telefone/WhatsApp, não por painel web.
-- **Plataforma única, sem multi-tenant** — ConectFome é uma rede só de
+- **Plataforma única, sem multi-tenant** — ConectaFome é uma rede só de
   doadores/receptores, não um SaaS com múltiplas organizações isoladas
   (diferente do ATHLO, de onde vem a fundação de auth).
 

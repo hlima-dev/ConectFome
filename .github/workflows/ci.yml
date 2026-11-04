@@ -13,6 +13,22 @@ jobs:
       run:
         working-directory: backend
 
+    # Banco real para os testes de integração (npm run test:integration)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: conectfome
+          POSTGRES_PASSWORD: conectfome
+          POSTGRES_DB: conectfome_itest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conectfome"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -31,8 +47,18 @@ jobs:
       - name: Gerar Prisma Client
         run: npm run db:generate
 
-      - name: Testes
+      - name: Testes unitários
         run: npm run test
+
+      - name: Migrar o banco de integração
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://conectfome:conectfome@localhost:5432/conectfome_itest
+
+      - name: Testes de integração (PostgreSQL real)
+        run: npm run test:integration
+        env:
+          INTEGRATION_DATABASE_URL: postgresql://conectfome:conectfome@localhost:5432/conectfome_itest
 
       - name: Build (typecheck)
         run: npm run build

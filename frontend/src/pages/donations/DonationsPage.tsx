@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { DataTable, type DataTableColumn } from '../../components/DataTable'
 import { StatusBadge } from '../../components/StatusBadge'
+import { UrgencyBadge } from '../../components/UrgencyBadge'
 import { useDonations } from '../../hooks/useDonations'
 import { getStoredUser } from '../../services/auth'
 import {
@@ -13,6 +14,7 @@ import {
   type DonationStatus,
 } from '../../types/donations'
 import { DonationFormModal } from './DonationFormModal'
+import { formatKg } from '../../utils/format'
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -38,11 +40,16 @@ export function DonationsPage() {
     { header: 'Categoria', cell: (d) => FOOD_CATEGORY_LABELS[d.category] },
     { header: 'Doador', cell: (d) => d.donor?.name ?? '—' },
     { header: 'Receptor', cell: (d) => d.recipient?.name ?? '—' },
-    { header: 'Qtd. estimada', cell: (d) => `${d.estimatedQuantityKg} kg` },
+    { header: 'Qtd. estimada', cell: (d) => formatKg(d.estimatedQuantityKg) },
     { header: 'Janela de coleta', cell: (d) => formatDate(d.pickupWindowStart) },
     {
       header: 'Status',
-      cell: (d) => <StatusBadge label={DONATION_STATUS_LABELS[d.status]} tone={DONATION_STATUS_TONES[d.status]} />,
+      cell: (d) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge label={DONATION_STATUS_LABELS[d.status]} tone={DONATION_STATUS_TONES[d.status]} />
+          <UrgencyBadge urgency={d.urgency} />
+        </div>
+      ),
     },
   ]
 

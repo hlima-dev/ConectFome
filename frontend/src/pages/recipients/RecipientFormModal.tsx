@@ -12,6 +12,7 @@ const schema = z.object({
   type: z.enum(['ONG', 'FAMILIA'], { message: 'Tipo é obrigatório' }),
   contactName: z.string().optional(),
   phone: z.string().optional(),
+  address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   peopleServed: z.union([z.literal(''), z.coerce.number().int().positive()]).optional(),
@@ -44,6 +45,7 @@ export function RecipientFormModal({ recipient, onClose }: RecipientFormModalPro
           type: recipient.type,
           contactName: recipient.contactName ?? '',
           phone: recipient.phone ?? '',
+          address: recipient.address ?? '',
           city: recipient.city ?? '',
           state: recipient.state ?? '',
           peopleServed: recipient.peopleServed ?? '',
@@ -58,6 +60,7 @@ export function RecipientFormModal({ recipient, onClose }: RecipientFormModalPro
         type: values.type,
         contactName: values.contactName || undefined,
         phone: values.phone || undefined,
+        address: values.address || undefined,
         city: values.city || undefined,
         state: values.state || undefined,
         peopleServed: values.peopleServed === '' || values.peopleServed === undefined ? undefined : Number(values.peopleServed),
@@ -114,6 +117,13 @@ export function RecipientFormModal({ recipient, onClose }: RecipientFormModalPro
             <input id="recipient-peopleServed" type="number" className="input" {...register('peopleServed')} />
             {errors.peopleServed && <p className="mt-1 text-xs text-red-600">{errors.peopleServed.message}</p>}
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="recipient-address" className="mb-1 block text-sm font-medium text-slate-700">
+            Endereço <span className="font-normal text-slate-400">(rua e número; usado para o mapa das rotas)</span>
+          </label>
+          <input id="recipient-address" className="input" {...register('address')} />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
