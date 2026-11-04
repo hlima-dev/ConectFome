@@ -4,6 +4,8 @@
 // = + - @ vira texto literal, para uma descrição maliciosa digitada por um
 // doador não ser executada como fórmula na planilha de quem exporta.
 const SEPARATOR = ';'
+// Marca de ordem de bytes UTF-8: faz o Excel reconhecer os acentos.
+const BOM = '\uFEFF'
 const FORMULA_START = /^[=+\-@\t\r]/
 
 export type CsvCell = string | number | Date | null | undefined
@@ -40,5 +42,5 @@ export function csvCell(value: CsvCell): string {
 
 export function toCsv(header: string[], rows: CsvCell[][]): string {
   const lines = [header, ...rows].map((row) => row.map(csvCell).join(SEPARATOR))
-  return `﻿${lines.join('\r\n')}\r\n`
+  return `${BOM}${lines.join('\r\n')}\r\n`
 }
