@@ -126,7 +126,7 @@ export class ReportService {
 
   // Alimenta os cards de KPI do Dashboard.
   async summary() {
-    const [aggregate, activeDonors, activeRecipients, completedRoutes, deliveredDonations] = await Promise.all([
+    const [aggregate, activeDonors, activeRecipients, completedRoutes, deliveredDonations, byStatus] = await Promise.all([
       prisma.donation.aggregate({
         where: { status: { in: RESCUED_STATUSES } },
         _sum: { collectedQuantityKg: true },
@@ -136,6 +136,7 @@ export class ReportService {
       prisma.recipient.count({ where: { active: true } }),
       prisma.pickupRoute.count({ where: { status: PickupRouteStatus.CONCLUIDA } }),
       prisma.donation.count({ where: { status: DonationStatus.ENTREGUE } }),
+      prisma.donation.groupBy({ by: ['status'], _count: true }),
     ])
 
     return {
@@ -145,6 +146,8 @@ export class ReportService {
       completedRoutes,
       activeDonors,
       activeRecipients,
+      // Quantas doações há em cada estado (todas as já registradas), para o gráfico do painel.
+      donationsByStatus: Object.fromEntries(byStatus.map((g) => [g.status, g._count])) as Record<string, number>,
     }
   }
 

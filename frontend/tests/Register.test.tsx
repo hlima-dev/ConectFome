@@ -43,3 +43,42 @@ describe('Register', () => {
     expect(registerMock).not.toHaveBeenCalled()
   })
 })
+
+describe('Register — endereço (usado para o mapa das rotas)', () => {
+  it('doador: envia o endereço junto com cidade e UF', async () => {
+    const user = userEvent.setup()
+    registerMock.mockResolvedValueOnce({ csrfToken: 'c', user: { id: '1', name: 'x', email: 'x@x.com', role: 'DOADOR' } })
+    renderRegister()
+
+    await user.type(screen.getByLabelText('Nome'), 'Maria')
+    await user.type(screen.getByLabelText('E-mail'), 'maria@mercado.com')
+    await user.type(screen.getByLabelText('Senha'), 'Senha1234')
+    await user.type(screen.getByLabelText('Nome do estabelecimento'), 'Mercado Bom Preço')
+    await user.type(screen.getByLabelText(/^Endereço/), 'Rua XV de Novembro, 100')
+    await user.type(screen.getByLabelText('Cidade'), 'Sorocaba')
+    await user.click(screen.getByRole('button', { name: /cadastrar/i }))
+
+    await vi.waitFor(() => expect(registerMock).toHaveBeenCalled())
+    expect(registerMock.mock.calls.at(-1)![0].donor).toMatchObject({ address: 'Rua XV de Novembro, 100', city: 'Sorocaba' })
+  })
+
+  it('receptor: também pede o endereço', async () => {
+    const user = userEvent.setup()
+    renderRegister()
+    await user.click(screen.getByText('Receptor (ONG, família)'))
+    expect(screen.getByLabelText(/^Endereço/)).toBeInTheDocument()
+  })
+
+  it('o endereço é opcional (cadastro segue sem ele)', async () => {
+    const user = userEvent.setup()
+    registerMock.mockResolvedValueOnce({ csrfToken: 'c', user: { id: '1', name: 'x', email: 'x@x.com', role: 'DOADOR' } })
+    renderRegister()
+    await user.type(screen.getByLabelText('Nome'), 'Maria')
+    await user.type(screen.getByLabelText('E-mail'), 'maria@mercado.com')
+    await user.type(screen.getByLabelText('Senha'), 'Senha1234')
+    await user.type(screen.getByLabelText('Nome do estabelecimento'), 'Mercado')
+    await user.click(screen.getByRole('button', { name: /cadastrar/i }))
+    await vi.waitFor(() => expect(registerMock).toHaveBeenCalled())
+    expect(registerMock.mock.calls.at(-1)![0].donor.address).toBeUndefined()
+  })
+})

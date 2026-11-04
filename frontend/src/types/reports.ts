@@ -25,6 +25,7 @@ export interface ReportSummary {
   completedRoutes: number
   activeDonors: number
   activeRecipients: number
+  donationsByStatus?: Partial<Record<string, number>>
 }
 
 // Indicadores do período (GET /reports/rates). Taxas são frações de 0 a 1, ou

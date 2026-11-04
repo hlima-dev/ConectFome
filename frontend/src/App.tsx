@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { PrivateRoute } from './routes/PrivateRoute'
 import { RoleRoute } from './routes/RoleRoute'
 import { AppLayout } from './layouts/AppLayout'
+import { Landing } from './pages/Landing'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
@@ -21,6 +22,7 @@ import { ReportsPage } from './pages/reports/ReportsPage'
 function App() {
   return (
     <Routes>
+      <Route path="/inicio" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Register />} />
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { BarChart3, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Search, Store, Truck, User, X } from 'lucide-react'
+import { Logo } from '../components/Logo'
 import { NotificationBell } from '../components/NotificationBell'
 import { getStoredUser, logout as logoutRequest } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
@@ -74,8 +75,8 @@ export function AppLayout() {
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            🍎 ConectFome
+          <Link to="/" aria-label="ConectFome, painel">
+            <Logo tone="light" size={30} />
           </Link>
           <button
             type="button"
@@ -137,9 +138,17 @@ export function AppLayout() {
           <div className="ml-auto flex items-center gap-4">
             <NotificationBell />
             {user && (
-              <div className="text-right leading-tight">
-                <p className="text-sm font-medium text-slate-900">{user.name}</p>
-                <p className="text-xs text-slate-500">{ROLE_LABELS[user.role] ?? user.role}</p>
+              <div className="flex items-center gap-3">
+                <div className="hidden text-right leading-tight sm:block">
+                  <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                  <p className="text-xs text-slate-500">{ROLE_LABELS[user.role] ?? user.role}</p>
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-800 text-sm font-semibold text-white"
+                >
+                  {user.name.trim().charAt(0).toUpperCase()}
+                </span>
               </div>
             )}
             <button

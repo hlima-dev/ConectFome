@@ -14,7 +14,8 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
   const location = useLocation()
 
   if (!hasStoredSession()) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    // Visitante sem sessão cai na página inicial pública; de lá vai para entrar ou cadastrar.
+    return <Navigate to="/inicio" replace state={{ from: location }} />
   }
 
   return children

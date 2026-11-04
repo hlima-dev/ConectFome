@@ -97,6 +97,10 @@ describe('ReportService', () => {
       mockPrisma.recipient.count.mockResolvedValue(3)
       mockPrisma.pickupRoute.count.mockResolvedValue(4)
       mockPrisma.donation.count.mockResolvedValue(6)
+      mockPrisma.donation.groupBy.mockResolvedValueOnce([
+        { status: 'ENTREGUE', _count: 6 },
+        { status: 'DISPONIVEL', _count: 2 },
+      ])
 
       const result = await service.summary()
 
@@ -107,6 +111,7 @@ describe('ReportService', () => {
         completedRoutes: 4,
         activeDonors: 5,
         activeRecipients: 3,
+        donationsByStatus: { ENTREGUE: 6, DISPONIVEL: 2 },
       })
     })
   })
