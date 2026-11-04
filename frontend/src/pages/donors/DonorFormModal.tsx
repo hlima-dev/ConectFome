@@ -12,6 +12,7 @@ const schema = z.object({
   type: z.enum(['MERCADO', 'RESTAURANTE', 'FEIRA', 'OUTRO'], { message: 'Tipo é obrigatório' }),
   contactName: z.string().optional(),
   phone: z.string().optional(),
+  address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
 })
@@ -42,6 +43,7 @@ export function DonorFormModal({ donor, onClose }: DonorFormModalProps) {
           type: donor.type,
           contactName: donor.contactName ?? '',
           phone: donor.phone ?? '',
+          address: donor.address ?? '',
           city: donor.city ?? '',
           state: donor.state ?? '',
         }
@@ -55,6 +57,7 @@ export function DonorFormModal({ donor, onClose }: DonorFormModalProps) {
         type: values.type,
         contactName: values.contactName || undefined,
         phone: values.phone || undefined,
+        address: values.address || undefined,
         city: values.city || undefined,
         state: values.state || undefined,
       })
@@ -101,6 +104,13 @@ export function DonorFormModal({ donor, onClose }: DonorFormModalProps) {
             Pessoa de contato <span className="font-normal text-slate-400">(opcional)</span>
           </label>
           <input id="donor-contactName" className="input" {...register('contactName')} />
+        </div>
+
+        <div>
+          <label htmlFor="donor-address" className="mb-1 block text-sm font-medium text-slate-700">
+            Endereço <span className="font-normal text-slate-400">(rua e número; usado para o mapa das rotas)</span>
+          </label>
+          <input id="donor-address" className="input" {...register('address')} />
         </div>
 
         <div className="grid grid-cols-3 gap-4">

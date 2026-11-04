@@ -225,6 +225,10 @@ O seed também cria 2 voluntários, 2 veículos e doações de exemplo em
 `DISPONÍVEL`, `RESERVADA`, `VENCIDA` e uma já `ENTREGUE` no mês
 anterior (pra o gráfico de relatório mostrar mais de um mês).
 
+## Publicação
+
+Veja [DEPLOY.md](DEPLOY.md) (Supabase + Render + Vercel) e `scripts/smoke.sh`.
+
 ## Testes
 
 ```bash
@@ -235,8 +239,9 @@ cd frontend && npm run test              # testes de componente
 
 Os testes unitários usam Prisma mockado (`vi.mock`). Os de integração
 (`backend/tests/integration`) rodam contra um PostgreSQL real e cobrem o
-ciclo completo da doação com histórico e a consulta SQL do relatório
-mensal. Eles precisam de um banco descartável já migrado:
+ciclo completo da doação com histórico, reserva concorrente, notificações,
+plano de rota e capacidade, indicadores e CSV (SQL real) e a **API pela rede**
+(Express de verdade): autenticação, CSRF e a matriz de permissões por papel. Eles precisam de um banco descartável já migrado:
 
 ```bash
 createdb conectfome_itest

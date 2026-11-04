@@ -12,6 +12,8 @@ services:
     rootDir: backend
     plan: free
     region: oregon
+    # O Render só considera o deploy saudável quando /health responde 200.
+    healthCheckPath: /health
     buildCommand: npm install --legacy-peer-deps && npm run db:generate && npm run build
     startCommand: npm run db:migrate:prod && npm run db:seed && npm start
     envVars:
