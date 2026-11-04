@@ -120,6 +120,30 @@ avisam o autor da ação. Uma nova doação avisa os receptores ativos da
 mesma cidade do doador (todos, se o doador não informou cidade) e os
 administradores. A interface consulta a cada 30 s.
 
+**Rota com mapa.** O detalhe da rota (`GET /api/v1/pickup-routes/:id`) traz
+`plan` e `load`. As paradas são os doadores (várias doações do mesmo doador
+= uma parada), ordenadas por **vizinho mais próximo** a partir da parada de
+prazo mais curto, com distância em **linha reta** (haversine). É uma
+heurística de apoio à decisão: não considera ruas, trânsito nem janelas de
+tempo e não garante a rota mais curta. Doadores sem coordenadas aparecem em
+um aviso, fora do mapa e da distância.
+
+**Capacidade do veículo.** A tela mostra a carga estimada contra
+`capacityKg`; anexar acima da capacidade é permitido (com alerta), mas
+**iniciar a rota** é bloqueado. Veículo sem capacidade cadastrada não é
+verificado. Ao concluir, o administrador pode informar o kg realmente
+coletado de cada doação (o padrão é a quantidade estimada).
+
+**Geocodificação.** Ao criar ou alterar o endereço de um doador/receptor, o
+backend busca latitude/longitude no Nominatim (OpenStreetMap) **em segundo
+plano**, sem atrasar a resposta; falha nunca impede o cadastro. O serviço
+público limita a 1 requisição por segundo e exige identificação
+(`GEOCODING_USER_AGENT`), por isso há fila com intervalo mínimo e cache.
+Variáveis: `GEOCODING_ENABLED` (padrão: ligada, exceto nos testes),
+`GEOCODING_URL`, `GEOCODING_USER_AGENT`. Para preencher cadastros
+existentes: `npm run db:geocode`. Os testes usam um servidor HTTP local no
+lugar do Nominatim; **não** há teste automatizado contra o serviço real.
+
 **Segurança sanitária.** O doador declara que o alimento está próprio para
 consumo (a data da declaração fica registrada) e informa a condição de
 armazenamento até a coleta — obrigatória para perecíveis e preparados. É
@@ -134,7 +158,7 @@ uma declaração: o sistema não mede temperatura.
 | Oportunidades | Painel das doações disponíveis, da mais urgente para a menos, com filtro por cidade e categoria; reservar e liberar | RECEPTOR |
 | Notificações | Sino com avisos dos eventos da doação (nova doação, reserva, rota, coleta, entrega, cancelamento) | Todos (cada um vê só as suas) |
 | Voluntários / Veículos | Cadastro simples, com edição | ADMIN |
-| Rotas de coleta | Criar, anexar/desanexar doação, iniciar, concluir, cancelar | ADMIN |
+| Rotas de coleta | Criar, anexar/desanexar doação, mapa e ordem sugerida das paradas, carga x capacidade, iniciar, concluir (com kg coletado), cancelar | ADMIN |
 | Relatórios | Kg resgatado por mês, por doador, por receptor, resumo de KPIs | ADMIN |
 
 ## Setup local
@@ -212,6 +236,9 @@ indicado; nunca aponte para um banco com dados.
 - **Sem verificação de e-mail nem recuperação de senha por e-mail** —
   reduz a superfície de configuração (sem provedor de e-mail) sem
   comprometer a demonstração do fluxo principal.
+- **Sem otimização de rota "de verdade"** — vizinho mais próximo e linha
+  reta bastam para rotas curtas; um solver com ruas e janelas de tempo fica
+  como evolução.
 - **Sem upload de foto da doação** — o texto da descrição já é
   suficiente pro fluxo de casar/coletar; foto é uma melhoria de UX, não
   uma dependência funcional.

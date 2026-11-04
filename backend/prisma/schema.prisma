@@ -131,6 +131,10 @@ model Donor {
   city        String?
   state       String?
   zipCode     String?
+  // Preenchidas em segundo plano (GeocodingService) a partir do endereço. Nulas
+  // quando o endereço está incompleto ou o serviço não o encontrou.
+  latitude    Float?
+  longitude   Float?
   active      Boolean   @default(true)
 
   donations Donation[]
@@ -158,6 +162,10 @@ model Recipient {
   state        String?
   zipCode      String?
   peopleServed Int?
+  // Preenchidas em segundo plano (GeocodingService) a partir do endereço. Nulas
+  // quando o endereço está incompleto ou o serviço não o encontrou.
+  latitude     Float?
+  longitude    Float?
   active       Boolean       @default(true)
 
   donations Donation[]

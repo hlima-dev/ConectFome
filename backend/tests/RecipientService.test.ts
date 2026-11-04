@@ -15,6 +15,12 @@ const mockPrisma = vi.hoisted(() => ({
 
 vi.mock('../src/config/prisma', () => ({ prisma: mockPrisma }))
 
+const geocodeStoredProfile = vi.hoisted(() => vi.fn())
+vi.mock('../src/services/GeocodingService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/services/GeocodingService')>()),
+  geocoder: { geocodeStoredProfile },
+}))
+
 const admin = { id: 'admin_1', role: Role.ADMIN }
 const recipientUser = { id: 'user_1', role: Role.RECEPTOR }
 const donorUser = { id: 'user_2', role: Role.DOADOR }
@@ -53,5 +59,38 @@ describe('RecipientService', () => {
     mockPrisma.recipient.findUnique.mockResolvedValue({ id: 'r1', active: true })
     await service.deactivate('r1')
     expect(mockPrisma.recipient.update).toHaveBeenCalledWith({ where: { id: 'r1' }, data: { active: false } })
+  })
+
+  describe('geocodificação do endereço', () => {
+    it('criar com endereço dispara a geocodificação em segundo plano', async () => {
+      mockPrisma.recipient.create.mockResolvedValue({ id: 'x1', name: 'Nome' })
+      await service.create({ name: 'Nome', address: 'Rua A, 10', city: 'Sorocaba' })
+      expect(geocodeStoredProfile).toHaveBeenCalledWith('recipient', 'x1')
+    })
+
+    it('criar sem endereço não geocodifica', async () => {
+      mockPrisma.recipient.create.mockResolvedValue({ id: 'x1', name: 'Nome' })
+      await service.create({ name: 'Nome', phone: '1' })
+      expect(geocodeStoredProfile).not.toHaveBeenCalled()
+    })
+
+    it('mudar o endereço apaga as coordenadas antigas e geocodifica de novo', async () => {
+      mockPrisma.recipient.findUnique.mockResolvedValue({ id: 'x1', userId: 'user_1' })
+      mockPrisma.recipient.update.mockResolvedValue({ id: 'x1' })
+      await service.update('x1', { city: 'Votorantim' }, admin)
+      expect(mockPrisma.recipient.update).toHaveBeenCalledWith({
+        where: { id: 'x1' },
+        data: { city: 'Votorantim', latitude: null, longitude: null },
+      })
+      expect(geocodeStoredProfile).toHaveBeenCalledWith('recipient', 'x1')
+    })
+
+    it('editar só o telefone mantém as coordenadas', async () => {
+      mockPrisma.recipient.findUnique.mockResolvedValue({ id: 'x1', userId: 'user_1' })
+      mockPrisma.recipient.update.mockResolvedValue({ id: 'x1' })
+      await service.update('x1', { phone: '99' }, admin)
+      expect(mockPrisma.recipient.update).toHaveBeenCalledWith({ where: { id: 'x1' }, data: { phone: '99' } })
+      expect(geocodeStoredProfile).not.toHaveBeenCalled()
+    })
   })
 })

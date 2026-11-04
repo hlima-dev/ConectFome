@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { PickupRoute, PickupRouteInput, PickupRouteStatus } from '../types/logistics'
+import type { CollectedQuantity, PickupRoute, PickupRouteInput, PickupRouteStatus } from '../types/logistics'
 
 export async function listPickupRoutes(params?: {
   status?: PickupRouteStatus
@@ -40,8 +40,8 @@ export async function startPickupRoute(id: string): Promise<PickupRoute> {
   return response.data.data
 }
 
-export async function completePickupRoute(id: string): Promise<PickupRoute> {
-  const response = await api.patch(`/pickup-routes/${id}/complete`, {})
+export async function completePickupRoute(id: string, collectedQuantities?: CollectedQuantity[]): Promise<PickupRoute> {
+  const response = await api.patch(`/pickup-routes/${id}/complete`, { collectedQuantities })
   return response.data.data
 }
 

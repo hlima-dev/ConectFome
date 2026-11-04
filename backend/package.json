@@ -16,7 +16,8 @@
     "db:reset": "prisma migrate reset",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.mts"
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "db:geocode": "tsx prisma/geocodeMissing.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

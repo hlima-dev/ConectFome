@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { User } from '@prisma/client'
 import { prisma } from '../config/prisma'
 import { env } from '../config/env'
+import { geocoder } from './GeocodingService'
 import { generateTokenPair, verifyRefreshToken } from '../utils/jwt'
 import { ConflictError, NotFoundError, UnauthorizedError, ValidationError } from '../utils/AppError'
 
@@ -69,6 +70,8 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(input.password, env.BCRYPT_SALT_ROUNDS)
 
+    const profiles: { kind: 'donor' | 'recipient'; id: string }[] = []
+
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
         data: {
@@ -81,19 +84,24 @@ export class AuthService {
       })
 
       if (input.role === 'DOADOR' && input.donor) {
-        await tx.donor.create({
+        const donor = await tx.donor.create({
           data: { ...input.donor, userId: created.id },
         })
+        profiles.push({ kind: 'donor', id: donor.id })
       }
 
       if (input.role === 'RECEPTOR' && input.recipient) {
-        await tx.recipient.create({
+        const recipient = await tx.recipient.create({
           data: { ...input.recipient, userId: created.id },
         })
+        profiles.push({ kind: 'recipient', id: recipient.id })
       }
 
       return created
     })
+
+    // Coordenadas do endereço, em segundo plano (melhor esforço).
+    for (const profile of profiles) void geocoder.geocodeStoredProfile(profile.kind, profile.id)
 
     return this.issueSession(user)
   }

@@ -54,6 +54,9 @@ async function main() {
           address: 'Rua das Flores, 100',
           city: 'São Paulo',
           state: 'SP',
+          // coordenadas aproximadas de demonstração (o endereço do seed é fictício)
+          latitude: -23.5614,
+          longitude: -46.6559,
         },
       },
     },
@@ -76,6 +79,9 @@ async function main() {
           address: 'Av. Central, 500',
           city: 'São Paulo',
           state: 'SP',
+          // coordenadas aproximadas de demonstração (o endereço do seed é fictício)
+          latitude: -23.5505,
+          longitude: -46.6333,
         },
       },
     },
@@ -100,6 +106,9 @@ async function main() {
           address: 'Rua da Esperança, 20',
           city: 'São Paulo',
           state: 'SP',
+          // coordenadas aproximadas de demonstração (o endereço do seed é fictício)
+          latitude: -23.5329,
+          longitude: -46.6395,
           peopleServed: 80,
         },
       },
@@ -123,6 +132,9 @@ async function main() {
           address: 'Travessa das Acácias, 45',
           city: 'São Paulo',
           state: 'SP',
+          // coordenadas aproximadas de demonstração (o endereço do seed é fictício)
+          latitude: -23.5880,
+          longitude: -46.6820,
           peopleServed: 6,
         },
       },
@@ -211,8 +223,9 @@ async function main() {
       termsAcceptedAt: now,
       description: 'Caixas de verduras e legumes fora do padrão estético',
       estimatedQuantityKg: 18,
-      pickupWindowStart: new Date(now.getTime() + 24 * 60 * 60 * 1000),
-      pickupWindowEnd: new Date(now.getTime() + 30 * 60 * 60 * 1000),
+      // prazo curto de propósito: aparece como "Urgente" no painel de oportunidades
+      pickupWindowStart: now,
+      pickupWindowEnd: new Date(now.getTime() + 18 * 60 * 60 * 1000),
       status: 'DISPONIVEL',
     },
   })

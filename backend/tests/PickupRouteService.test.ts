@@ -154,9 +154,15 @@ describe('PickupRouteService', () => {
   })
 
   describe('start', () => {
+    const planned = (donations: { estimatedQuantityKg: number }[], capacityKg: number | null = null) => ({
+      id: 'r1',
+      status: PickupRouteStatus.PLANEJADA,
+      vehicle: { capacityKg },
+      donations,
+    })
+
     it('inicia uma rota planejada com ao menos 1 doação anexada', async () => {
-      mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.PLANEJADA })
-      mockPrisma.donation.count.mockResolvedValue(2)
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(planned([{ estimatedQuantityKg: 10 }, { estimatedQuantityKg: 5 }]))
       mockPrisma.pickupRoute.update.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.EM_ANDAMENTO })
 
       await service.start('r1')
@@ -167,14 +173,90 @@ describe('PickupRouteService', () => {
     })
 
     it('rejeita iniciar sem nenhuma doação anexada', async () => {
-      mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.PLANEJADA })
-      mockPrisma.donation.count.mockResolvedValue(0)
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(planned([]))
       await expect(service.start('r1')).rejects.toThrow(ValidationError)
     })
 
     it('rejeita iniciar uma rota que não está planejada', async () => {
       mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', status: PickupRouteStatus.CONCLUIDA })
       await expect(service.start('r1')).rejects.toThrow(ValidationError)
+    })
+
+    it('rota inexistente', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(null)
+      await expect(service.start('x')).rejects.toThrow(NotFoundError)
+    })
+
+    it('bloqueia a saída quando o peso estimado passa da capacidade do veículo', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(planned([{ estimatedQuantityKg: 300 }, { estimatedQuantityKg: 250 }], 500))
+      await expect(service.start('r1')).rejects.toThrow(/550 kg\) excede a capacidade do veículo \(500 kg\)/)
+      expect(mockPrisma.pickupRoute.update).not.toHaveBeenCalled()
+    })
+
+    it('peso exatamente igual à capacidade pode sair', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(planned([{ estimatedQuantityKg: 500 }], 500))
+      mockPrisma.pickupRoute.update.mockResolvedValue({ id: 'r1' })
+      await service.start('r1')
+      expect(mockPrisma.pickupRoute.update).toHaveBeenCalled()
+    })
+
+    it('veículo sem capacidade cadastrada não é verificado', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue(planned([{ estimatedQuantityKg: 99999 }], null))
+      mockPrisma.pickupRoute.update.mockResolvedValue({ id: 'r1' })
+      await service.start('r1')
+      expect(mockPrisma.pickupRoute.update).toHaveBeenCalled()
+    })
+  })
+
+  describe('findById — plano e carga', () => {
+    const hours = (h: number) => new Date(Date.now() + h * 3_600_000)
+    const donation = (id: string, donorId: string, lat: number | null, lng: number | null, kg: number, end: number, recipient: unknown = null) => ({
+      id,
+      description: `doação ${id}`,
+      status: DonationStatus.AGENDADA,
+      estimatedQuantityKg: String(kg),
+      bestBeforeDate: null,
+      pickupWindowEnd: hours(end),
+      donor: { id: donorId, name: donorId, address: `Rua ${donorId}`, city: 'Sorocaba', latitude: lat, longitude: lng },
+      recipient,
+    })
+
+    it('devolve carga, paradas ordenadas, paradas sem coordenadas e receptores', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue({
+        id: 'r1',
+        vehicle: { capacityKg: '100' },
+        donations: [
+          donation('1', 'longe', 0, 0.5, 10, 30),
+          donation('2', 'urgente', 0, 0, 20, 4, { id: 'rec1', name: 'ONG', address: 'Rua O', latitude: 1, longitude: 1 }),
+          donation('3', 'semgeo', null, null, 5, 20),
+          donation('4', 'urgente', 0, 0, 7, 4),
+        ],
+      })
+
+      const route = await service.findById('r1')
+
+      expect(route.load).toEqual({ totalKg: 42, capacityKg: 100, exceeds: false, remainingKg: 58 })
+      expect(route.plan.stops.map((s) => s.donorId)).toEqual(['urgente', 'longe'])
+      expect(route.plan.stops[0].donations.map((d) => d.id)).toEqual(['2', '4'])
+      expect(route.plan.unlocated.map((s) => s.donorId)).toEqual(['semgeo'])
+      expect(route.plan.totalKm).toBeGreaterThan(0)
+      expect(route.plan.recipients).toEqual([{ id: 'rec1', name: 'ONG', address: 'Rua O', latitude: 1, longitude: 1 }])
+    })
+
+    it('rota sem doações: plano vazio e carga zero', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue({ id: 'r1', vehicle: { capacityKg: null }, donations: [] })
+      const route = await service.findById('r1')
+      expect(route.plan).toEqual({ stops: [], totalKm: 0, unlocated: [], recipients: [] })
+      expect(route.load).toMatchObject({ totalKg: 0, exceeds: false, capacityKg: null })
+    })
+
+    it('marca excedente quando o peso passa da capacidade', async () => {
+      mockPrisma.pickupRoute.findUnique.mockResolvedValue({
+        id: 'r1',
+        vehicle: { capacityKg: 10 },
+        donations: [donation('1', 'a', 0, 0, 30, 10)],
+      })
+      expect((await service.findById('r1')).load).toMatchObject({ exceeds: true, remainingKg: -20 })
     })
   })
 
