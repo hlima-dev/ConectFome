@@ -194,6 +194,8 @@ async function main() {
     update: {},
     create: {
       id: 'seed-donation-historico',
+      // registrada na véspera da coleta (senão o tempo até a coleta ficaria negativo)
+      createdAt: new Date(lastMonth.getTime() - 24 * 60 * 60 * 1000),
       donorId: donor2.id,
       category: 'PREPARADO',
       storageCondition: 'REFRIGERADO',
@@ -256,6 +258,7 @@ async function main() {
     update: {},
     create: {
       id: 'seed-donation-vencida',
+      createdAt: twoDaysAgo,
       donorId: donor1.id,
       category: 'PERECIVEL',
       storageCondition: 'REFRIGERADO',

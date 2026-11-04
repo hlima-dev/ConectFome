@@ -17,6 +17,7 @@ router.get('/opportunities', authorize(Role.ADMIN, Role.RECEPTOR), (req, res) =>
 router.post('/', authorize(Role.ADMIN, Role.DOADOR), (req, res) => controller.create(req, res))
 router.get('/:id', (req, res) => controller.getById(req, res))
 router.get('/:id/events', (req, res) => controller.events(req, res))
+router.get('/:id/receipt', authorize(Role.ADMIN, Role.DOADOR), (req, res) => controller.receipt(req, res))
 router.patch('/:id', authorize(Role.ADMIN, Role.DOADOR), (req, res) => controller.update(req, res))
 router.patch('/:id/match', authorize(Role.ADMIN), (req, res) => controller.match(req, res))
 router.patch('/:id/reserve', authorize(Role.RECEPTOR), (req, res) => controller.reserve(req, res))

@@ -478,6 +478,72 @@ describe('DonationService', () => {
     })
   })
 
+  describe('getReceipt', () => {
+    const coletada = (over: Record<string, unknown> = {}) => ({
+      id: 'cl9x8y7z6abcd1234',
+      donorId: 'd1',
+      description: 'Marmitas',
+      category: FoodCategory.PREPARADO,
+      storageCondition: StorageCondition.REFRIGERADO,
+      estimatedQuantityKg: '35',
+      collectedQuantityKg: '32',
+      status: DonationStatus.ENTREGUE,
+      bestBeforeDate: null,
+      termsAcceptedAt: new Date('2026-10-01T10:00:00Z'),
+      createdAt: new Date('2026-10-01T10:00:00Z'),
+      collectedAt: new Date('2026-10-02T10:00:00Z'),
+      confirmedAt: new Date('2026-10-02T12:00:00Z'),
+      donor: { name: 'Restaurante', document: '11.222.333/0001-44', address: 'Rua A, 1', city: 'Sorocaba', state: 'SP' },
+      recipient: { name: 'ONG', document: null, address: null, city: 'Votorantim', state: null },
+      ...over,
+    })
+
+    it('administrador emite o comprovante com partes, quantidades e datas', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(coletada())
+
+      const receipt = await service.getReceipt('x', admin)
+
+      expect(receipt.number).toBe('CF-ABCD1234')
+      expect(receipt.number).toMatch(/^CF-[A-Z0-9]{8}$/)
+      expect(receipt.donor).toEqual({ name: 'Restaurante', document: '11.222.333/0001-44', address: 'Rua A, 1, Sorocaba, SP' })
+      expect(receipt.recipient).toEqual({ name: 'ONG', document: null, address: 'Votorantim' })
+      expect(receipt.donation).toMatchObject({ estimatedQuantityKg: 35, collectedQuantityKg: 32, storageCondition: 'REFRIGERADO' })
+    })
+
+    it('doador dono emite; outro doador não', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(coletada())
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd1' })
+      await expect(service.getReceipt('x', donorUser)).resolves.toBeTruthy()
+
+      mockPrisma.donor.findUnique.mockResolvedValue({ id: 'd2' })
+      await expect(service.getReceipt('x', otherDonorUser)).rejects.toThrow(ForbiddenError)
+    })
+
+    it('receptor não emite comprovante', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(coletada())
+      await expect(service.getReceipt('x', recipientUser)).rejects.toThrow(ForbiddenError)
+    })
+
+    it.each([DonationStatus.DISPONIVEL, DonationStatus.RESERVADA, DonationStatus.AGENDADA, DonationStatus.CANCELADA, DonationStatus.VENCIDA])(
+      'não emite para doação %s (ainda não coletada)',
+      async (status) => {
+        mockPrisma.donation.findUnique.mockResolvedValue(coletada({ status }))
+        await expect(service.getReceipt('x', admin)).rejects.toThrow(/depois que a doação for coletada/)
+      },
+    )
+
+    it('COLETADA (ainda não confirmada) já tem comprovante, com quantidade coletada', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(coletada({ status: DonationStatus.COLETADA, confirmedAt: null }))
+      const receipt = await service.getReceipt('x', admin)
+      expect(receipt.donation.confirmedAt).toBeNull()
+    })
+
+    it('doação inexistente', async () => {
+      mockPrisma.donation.findUnique.mockResolvedValue(null)
+      await expect(service.getReceipt('x', admin)).rejects.toThrow(NotFoundError)
+    })
+  })
+
   describe('findEvents', () => {
     it('dono DOADOR vê o histórico da própria doação', async () => {
       mockPrisma.donation.findUnique.mockResolvedValue({ id: 'don1', donorId: 'd1', recipientId: null })

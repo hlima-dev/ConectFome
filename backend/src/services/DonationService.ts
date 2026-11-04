@@ -141,6 +141,55 @@ export class DonationService {
     })
   }
 
+  // Comprovante de doação: só depois que o alimento foi coletado (antes disso
+  // ainda não houve doação de fato). Quem emite: o administrador ou o doador
+  // dono. É um documento do sistema e não substitui nota fiscal ou recibo
+  // exigido por lei.
+  async getReceipt(id: string, requester: Requester) {
+    const donation = await prisma.donation.findUnique({ where: { id }, include: { donor: true, recipient: true } })
+    if (!donation) {
+      throw new NotFoundError('Doação')
+    }
+
+    if (requester.role !== Role.ADMIN) {
+      const donor = requester.role === Role.DOADOR ? await prisma.donor.findUnique({ where: { userId: requester.id } }) : null
+      if (!donor || donor.id !== donation.donorId) {
+        throw new ForbiddenError('Você só pode emitir o comprovante das próprias doações')
+      }
+    }
+
+    const issuable: DonationStatus[] = [DonationStatus.COLETADA, DonationStatus.ENTREGUE]
+    if (!issuable.includes(donation.status)) {
+      throw new ValidationError('O comprovante só pode ser emitido depois que a doação for coletada')
+    }
+
+    const party = (p: { name: string; document: string | null; address: string | null; city: string | null; state: string | null }) => ({
+      name: p.name,
+      document: p.document,
+      address: [p.address, p.city, p.state].filter(Boolean).join(', ') || null,
+    })
+
+    return {
+      number: `CF-${donation.id.slice(-8).toUpperCase()}`,
+      issuedAt: new Date(),
+      donor: party(donation.donor),
+      recipient: donation.recipient ? party(donation.recipient) : null,
+      donation: {
+        description: donation.description,
+        category: donation.category,
+        storageCondition: donation.storageCondition,
+        estimatedQuantityKg: Number(donation.estimatedQuantityKg),
+        collectedQuantityKg: donation.collectedQuantityKg === null ? null : Number(donation.collectedQuantityKg),
+        status: donation.status,
+        bestBeforeDate: donation.bestBeforeDate,
+        termsAcceptedAt: donation.termsAcceptedAt,
+        registeredAt: donation.createdAt,
+        collectedAt: donation.collectedAt,
+        confirmedAt: donation.confirmedAt,
+      },
+    }
+  }
+
   // Só pode editar detalhes enquanto ninguém ainda se comprometeu com a
   // doação — depois de RESERVADA, mudar quantidade/janela seria enganar
   // quem já foi casado com ela.

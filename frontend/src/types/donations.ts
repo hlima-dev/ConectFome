@@ -145,3 +145,23 @@ export const DONATION_STATUS_TONES: Record<DonationStatus, BadgeTone> = {
   CANCELADA: 'red',
   VENCIDA: 'amber',
 }
+
+export interface DonationReceipt {
+  number: string
+  issuedAt: string
+  donor: { name: string; document: string | null; address: string | null }
+  recipient: { name: string; document: string | null; address: string | null } | null
+  donation: {
+    description: string
+    category: FoodCategory
+    storageCondition: StorageCondition
+    estimatedQuantityKg: number
+    collectedQuantityKg: number | null
+    status: DonationStatus
+    bestBeforeDate: string | null
+    termsAcceptedAt: string | null
+    registeredAt: string
+    collectedAt: string | null
+    confirmedAt: string | null
+  }
+}

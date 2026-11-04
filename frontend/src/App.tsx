@@ -9,6 +9,7 @@ import { DonorsPage } from './pages/donors/DonorsPage'
 import { RecipientsPage } from './pages/recipients/RecipientsPage'
 import { DonationsPage } from './pages/donations/DonationsPage'
 import { DonationDetailPage } from './pages/donations/DonationDetailPage'
+import { ReceiptPage } from './pages/donations/ReceiptPage'
 import { OpportunitiesPage } from './pages/donations/OpportunitiesPage'
 import { VolunteersPage } from './pages/logistics/VolunteersPage'
 import { VehiclesPage } from './pages/logistics/VehiclesPage'
@@ -58,6 +59,14 @@ function App() {
         />
         <Route path="doacoes" element={<DonationsPage />} />
         <Route path="doacoes/:id" element={<DonationDetailPage />} />
+        <Route
+          path="doacoes/:id/comprovante"
+          element={
+            <RoleRoute roles={['ADMIN', 'DOADOR']}>
+              <ReceiptPage />
+            </RoleRoute>
+          }
+        />
         <Route
           path="voluntarios"
           element={

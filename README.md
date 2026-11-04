@@ -144,6 +144,22 @@ Variáveis: `GEOCODING_ENABLED` (padrão: ligada, exceto nos testes),
 existentes: `npm run db:geocode`. Os testes usam um servidor HTTP local no
 lugar do Nominatim; **não** há teste automatizado contra o serviço real.
 
+**Comprovante.** `GET /api/v1/donations/:id/receipt` (administrador ou o
+doador dono) devolve os dados do comprovante de uma doação **já coletada**; a
+tela `/doacoes/:id/comprovante` o mostra para imprimir ou salvar em PDF pelo
+navegador. É um documento do sistema, sem valor fiscal.
+
+**Indicadores e exportação.** `GET /api/v1/reports/rates?from=&to=` (datas
+AAAA-MM-DD, fim inclusivo, por data de registro da doação) devolve taxas de
+resgate, perda e entrega (frações, ou `null` sem base de cálculo), kg
+resgatado e perdido, tempo médio até a coleta (ignora coleta anterior ao
+registro) e pessoas atendidas (soma de `peopleServed` das instituições com ao
+menos uma entrega no período, cada uma contada uma vez).
+`GET /api/v1/reports/donations.csv` exporta as doações do período em CSV
+para Excel em português (`;`, decimal com vírgula, BOM UTF-8, datas em
+horário de Brasília), com proteção contra injeção de fórmula nos campos
+livres.
+
 **Segurança sanitária.** O doador declara que o alimento está próprio para
 consumo (a data da declaração fica registrada) e informa a condição de
 armazenamento até a coleta — obrigatória para perecíveis e preparados. É
@@ -159,7 +175,7 @@ uma declaração: o sistema não mede temperatura.
 | Notificações | Sino com avisos dos eventos da doação (nova doação, reserva, rota, coleta, entrega, cancelamento) | Todos (cada um vê só as suas) |
 | Voluntários / Veículos | Cadastro simples, com edição | ADMIN |
 | Rotas de coleta | Criar, anexar/desanexar doação, mapa e ordem sugerida das paradas, carga x capacidade, iniciar, concluir (com kg coletado), cancelar | ADMIN |
-| Relatórios | Kg resgatado por mês, por doador, por receptor, resumo de KPIs | ADMIN |
+| Relatórios | Kg resgatado por mês, por doador e por receptor, taxas do período, tempo até a coleta, pessoas atendidas, exportação CSV | ADMIN |
 
 ## Setup local
 

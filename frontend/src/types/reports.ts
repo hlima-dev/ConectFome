@@ -26,3 +26,25 @@ export interface ReportSummary {
   activeDonors: number
   activeRecipients: number
 }
+
+// Indicadores do período (GET /reports/rates). Taxas são frações de 0 a 1, ou
+// null quando não há base de cálculo.
+export interface RatesReport {
+  registered: number
+  rescued: number
+  delivered: number
+  expired: number
+  canceled: number
+  rescueRate: number | null
+  lossRate: number | null
+  deliveryRate: number | null
+  rescuedKg: number
+  lostKg: number
+  avgHoursToCollect: number | null
+  peopleServed: number
+}
+
+export interface ReportPeriod {
+  from?: string
+  to?: string
+}

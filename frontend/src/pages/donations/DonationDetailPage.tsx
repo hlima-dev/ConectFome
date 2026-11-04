@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Modal } from '../../components/Modal'
@@ -144,6 +144,7 @@ export function DonationDetailPage() {
 
   const canCancelOrExpire = canManageAsDonor && ['DISPONIVEL', 'RESERVADA'].includes(donation.status)
   const canMatch = isAdmin && ['DISPONIVEL', 'RESERVADA'].includes(donation.status)
+  const canIssueReceipt = canManageAsDonor && ['COLETADA', 'ENTREGUE'].includes(donation.status)
   const canRelease = canManageAsRecipient && donation.status === 'RESERVADA'
   const canConfirmReceipt = canManageAsRecipient && donation.status === 'COLETADA'
   const isTerminal = ['ENTREGUE', 'CANCELADA', 'VENCIDA'].includes(donation.status)
@@ -283,6 +284,14 @@ export function DonationDetailPage() {
           >
             {donation.status === 'RESERVADA' ? 'Reatribuir a outro receptor' : 'Casar com receptor'}
           </button>
+        )}
+        {canIssueReceipt && (
+          <Link
+            to={`/doacoes/${donation.id}/comprovante`}
+            className="rounded-lg border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50"
+          >
+            Ver comprovante
+          </Link>
         )}
         {canRelease && (
           <button

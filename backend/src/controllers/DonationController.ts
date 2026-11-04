@@ -72,6 +72,11 @@ export class DonationController {
     res.json(successResponse(donation, 'Reserva desfeita — a doação voltou a ficar disponível'))
   }
 
+  async receipt(req: Request, res: Response): Promise<void> {
+    const receipt = await donationService.getReceipt(String(req.params.id), req.user!)
+    res.json(successResponse(receipt))
+  }
+
   async events(req: Request, res: Response): Promise<void> {
     const events = await donationService.findEvents(String(req.params.id), req.user!)
     res.json(successResponse(events))
