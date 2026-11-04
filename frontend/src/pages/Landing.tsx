@@ -27,7 +27,7 @@ export function Landing() {
     <div className="min-h-screen bg-white text-slate-800">
       <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/90 backdrop-blur">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6" aria-label="Principal">
-          <Link to="/inicio" aria-label="ConectFome, página inicial">
+          <Link to="/inicio" aria-label="ConectaFome, página inicial">
             <Logo />
           </Link>
           <div className="flex items-center gap-4 text-sm sm:gap-6">
@@ -88,7 +88,7 @@ export function Landing() {
           <h2 className="text-3xl font-bold text-emerald-950">Excedente de um lado, fome do outro</h2>
           <p className="mt-4 text-slate-600">
             Alimentos próprios para consumo são descartados todos os dias, enquanto 24,2% dos domicílios brasileiros convivem com algum
-            grau de insegurança alimentar (IBGE, PNAD Contínua 2024). O ConectFome organiza a ligação entre os dois lados: cadastro,
+            grau de insegurança alimentar (IBGE, PNAD Contínua 2024). O ConectaFome organiza a ligação entre os dois lados: cadastro,
             reserva, coleta, entrega e registro de tudo o que foi resgatado.
           </p>
         </section>

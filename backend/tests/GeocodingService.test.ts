@@ -170,9 +170,9 @@ describe('GeocodingService', () => {
     const url = () => `http://127.0.0.1:${(server.address() as AddressInfo).port}/search`
 
     it('faz a chamada HTTP, envia o User-Agent e lê as coordenadas', async () => {
-      const svc = new GeocodingService({ enabled: true, url: url(), minIntervalMs: 0, userAgent: 'ConectFome-test/1.0' })
+      const svc = new GeocodingService({ enabled: true, url: url(), minIntervalMs: 0, userAgent: 'ConectaFome-test/1.0' })
       expect(await svc.geocode(address)).toEqual({ latitude: -23.5015, longitude: -47.4526 })
-      expect(seen.userAgent).toBe('ConectFome-test/1.0')
+      expect(seen.userAgent).toBe('ConectaFome-test/1.0')
       expect(seen.url).toContain('format=jsonv2')
       expect(new URL(seen.url!, 'http://x').searchParams.get('q')).toBe('Rua XV de Novembro, 100, Sorocaba, SP, Brasil')
     })

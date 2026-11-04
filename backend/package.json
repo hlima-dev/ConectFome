@@ -1,7 +1,7 @@
 {
   "name": "conectfome-backend",
   "version": "1.0.0",
-  "description": "ConectFome — API de doação e resgate de alimentos (ODS 2 e 12)",
+  "description": "ConectaFome — API de doação e resgate de alimentos (ODS 2 e 12)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

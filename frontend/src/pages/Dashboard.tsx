@@ -58,7 +58,7 @@ export function Dashboard() {
     <div>
       <h1 className="text-2xl font-semibold text-slate-900">{isAdmin ? 'Dashboard administrativo' : 'Painel'}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        {isAdmin ? 'Visão geral do impacto do ConectFome. ' : ''}Bem-vindo(a), {user?.name} — {user ? ROLE_LABELS[user.role] : ''}
+        {isAdmin ? 'Visão geral do impacto do ConectaFome. ' : ''}Bem-vindo(a), {user?.name} — {user ? ROLE_LABELS[user.role] : ''}
       </p>
 
       {!isAdmin && (

@@ -28,7 +28,7 @@ async function main() {
     where: { email: 'admin@conectfome.org' },
     update: {},
     create: {
-      name: 'Administrador ConectFome',
+      name: 'Administrador ConectaFome',
       email: 'admin@conectfome.org',
       password: passwordHash,
       role: 'ADMIN',

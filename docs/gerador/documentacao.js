@@ -9,7 +9,7 @@ const M = require('./metrics.json')
 const telasDir = path.join(__dirname, '..', 'telas')
 const telasCatalog = fs.existsSync(path.join(telasDir, 'catalogo.json')) ? JSON.parse(fs.readFileSync(path.join(telasDir, 'catalogo.json'), 'utf8')) : []
 const telaPorTitulo = (trecho) => telasCatalog.find((t) => t.title.toLowerCase().includes(trecho.toLowerCase()))
-const NOME = 'ConectFome'
+const NOME = 'ConectaFome'
 const SUB = 'Plataforma de Doação e Redistribuição de Alimentos'
 
 // tamanho natural de um PNG, para manter proporção
@@ -67,7 +67,7 @@ const s1 = [
 const s2 = [
   H1('2. Introdução'),
   P('O desperdício de alimentos é, ao mesmo tempo, um problema social, econômico e ambiental. O relatório Food Waste Index 2024, do Programa das Nações Unidas para o Meio Ambiente, estima que o mundo gerou cerca de 1,05 bilhão de toneladas de resíduos alimentares em 2022, das quais 631 milhões de toneladas vieram dos domicílios (UNEP, 2024). No Brasil, a Pesquisa Nacional por Amostra de Domicílios Contínua de 2024 registrou 18,9 milhões de domicílios (24,2% do total) com algum grau de insegurança alimentar (IBGE, 2025). Há, portanto, alimento sendo descartado em um polo da cadeia e falta de alimento no outro.'),
-  P('O ConectFome é uma plataforma web que aproxima esses dois polos. Estabelecimentos (doadores) registram os excedentes que ainda estão próprios para consumo, informando validade, janela de coleta e condição de armazenamento. Instituições e famílias (receptores) veem em um painel as oportunidades disponíveis, ordenadas por urgência, e reservam as que conseguem aproveitar. A administração acompanha o fluxo, reatribui doações quando necessário e organiza a coleta em rotas com veículo e voluntário, com mapa e ordem sugerida das paradas. Cada passo fica registrado em um histórico (quem fez e quando), e o sistema emite o comprovante da doação e relatórios do alimento efetivamente resgatado por mês, por doador e por receptor.'),
+  P('O ConectaFome é uma plataforma web que aproxima esses dois polos. Estabelecimentos (doadores) registram os excedentes que ainda estão próprios para consumo, informando validade, janela de coleta e condição de armazenamento. Instituições e famílias (receptores) veem em um painel as oportunidades disponíveis, ordenadas por urgência, e reservam as que conseguem aproveitar. A administração acompanha o fluxo, reatribui doações quando necessário e organiza a coleta em rotas com veículo e voluntário, com mapa e ordem sugerida das paradas. Cada passo fica registrado em um histórico (quem fez e quando), e o sistema emite o comprovante da doação e relatórios do alimento efetivamente resgatado por mês, por doador e por receptor.'),
   P('A proposta se relaciona diretamente com o ODS 2 (Fome Zero), ao ampliar o acesso a alimentos, e com o ODS 12 (Consumo e Produção Responsáveis), ao reduzir perdas evitáveis. Este documento descreve o problema, o planejamento, o produto, as análises de usuário e de mercado e os limites do escopo do MVP.'),
 ]
 
@@ -95,7 +95,7 @@ const s4 = [
   P('Os dois públicos que o projeto atende têm necessidades complementares. Estabelecimentos precisam dar destino a excedentes antes do vencimento, e a doação costuma depender de contatos informais, grupos de mensagens e planilhas, o que atrasa a retirada e não deixa registro. Instituições sociais, por sua vez, não sabem com antecedência quando e onde haverá alimento e gastam combustível e tempo em deslocamentos mal planejados (ver Seção 10, Personas).'),
   P('Os números de contexto reforçam a relevância. O Food Waste Index 2024 aponta 79 kg de alimento desperdiçado por pessoa, por ano, nos domicílios em nível mundial; para o Brasil, a Embrapa reporta cerca de 94 kg por habitante, valor que vem de um estudo-piloto em cinco regiões do município do Rio de Janeiro e, portanto, não é uma estimativa nacional (EMBRAPA, 2024). Estimativas de volume nacional circulam entre 27 e 46 milhões de toneladas por ano, conforme a fonte e a metodologia, o que indica falta de consenso e não deve ser tratado como dado exato. Do lado da necessidade, a PNAD Contínua 2024 mostra que 24,2% dos domicílios brasileiros ainda convivem com algum grau de insegurança alimentar (IBGE, 2025).'),
   P('O ambiente legal também mudou. A Lei nº 14.016/2020, que autorizava a doação de excedentes e limitava a responsabilidade do doador, foi revogada pela Lei nº 15.224, de 30 de setembro de 2025, que institui a Política Nacional de Combate à Perda e ao Desperdício de Alimentos e cria o Selo Doador de Alimentos (BRASIL, 2025). A existência de um marco legal próprio e de um selo de reconhecimento reforça o interesse do doador em formalizar e documentar o que doa, que é justamente o que o relatório do sistema oferece. Os detalhes de responsabilidade do doador na nova lei devem ser conferidos no texto oficial antes de qualquer uso comercial do produto.'),
-  P('É preciso reconhecer que a doação de excedentes já tem iniciativas consolidadas. O programa Mesa Brasil Sesc atua em Sorocaba, Votorantim e Araçoiaba da Serra desde maio de 2017 e, entre janeiro e setembro de 2018, distribuiu 88.762 kg de alimentos a 36 instituições, com 21 doadores cadastrados (SESC SÃO PAULO, 2018). O ConectFome não pretende substituir esse tipo de programa: o diferencial proposto é uma ferramenta de código aberto, com rastreio de status por doação e relatório de impacto por doador e receptor, que pode servir a ONGs e coletivos menores ou operar em conjunto com redes existentes.'),
+  P('É preciso reconhecer que a doação de excedentes já tem iniciativas consolidadas. O programa Mesa Brasil Sesc atua em Sorocaba, Votorantim e Araçoiaba da Serra desde maio de 2017 e, entre janeiro e setembro de 2018, distribuiu 88.762 kg de alimentos a 36 instituições, com 21 doadores cadastrados (SESC SÃO PAULO, 2018). O ConectaFome não pretende substituir esse tipo de programa: o diferencial proposto é uma ferramenta de código aberto, com rastreio de status por doação e relatório de impacto por doador e receptor, que pode servir a ONGs e coletivos menores ou operar em conjunto com redes existentes.'),
   P('Do ponto de vista acadêmico, o projeto integra análise de requisitos, modelagem de dados, desenvolvimento web full stack, segurança de aplicações, testes automatizados, implantação e gestão de projetos.'),
 ]
 
@@ -258,7 +258,7 @@ const s8 = [
   H2('8.3 Arquitetura'),
   P('O sistema é um monorepo com duas aplicações. O frontend em React consome a API REST por HTTPS, e o backend em Node/Express aplica, em ordem, os middlewares de autenticação, CSRF e limitação de taxa, direciona para controllers que validam a entrada com Zod, delega a regra de negócio aos services e acessa o PostgreSQL por meio do Prisma. A geocodificação dos endereços usa o serviço Nominatim do OpenStreetMap, chamado pelo backend ao salvar um endereço, e o mapa da rota é desenhado no frontend com Leaflet sobre as camadas do OpenStreetMap.'),
   fig('arquitetura.png', 560),
-  caption('Figura 3 – Arquitetura do ConectFome.'),
+  caption('Figura 3 – Arquitetura do ConectaFome.'),
   H2('8.4 Modelo de dados'),
   table(
     ['Entidade', 'Papel no sistema', 'Campos principais'],
@@ -501,7 +501,7 @@ const s12 = [
 // ───────────────────────── 13. TAM SAM SOM ─────────────────────────
 const s13 = [
   H1('13. Estudo de Mercado (TAM, SAM, SOM)'),
-  P('O mercado do ConectFome é de dois lados: unidades que geram excedente (doadores) e pessoas e instituições que precisam de alimento (receptores). Como o produto não cobra no MVP, os valores a seguir medem o **tamanho do público potencial em unidades**, e não receita. A estimativa é intencionalmente simples e as hipóteses estão explícitas para que possam ser corrigidas.'),
+  P('O mercado do ConectaFome é de dois lados: unidades que geram excedente (doadores) e pessoas e instituições que precisam de alimento (receptores). Como o produto não cobra no MVP, os valores a seguir medem o **tamanho do público potencial em unidades**, e não receita. A estimativa é intencionalmente simples e as hipóteses estão explícitas para que possam ser corrigidas.'),
   H2('13.1 Lado doador'),
   table(
     ['Nível', 'Cálculo', 'Valor'],
@@ -537,8 +537,8 @@ const s13 = [
 // ───────────────────────── 14. CONCLUSÃO ─────────────────────────
 const s14 = [
   H1('14. Conclusão'),
-  P('O ConectFome entrega um fluxo completo e rastreável para a redistribuição de alimentos: cadastro de doadores e receptores, oferta de doações com validade e condição de armazenamento, painel de oportunidades com reserva pelo receptor, rotas de coleta com mapa e verificação de capacidade, confirmação de recebimento, comprovantes e relatórios de alimento resgatado. A modelagem do ciclo de vida da doação como uma sequência de estados distintos, cada um com seu responsável e seu registro no histórico, é a decisão central e dá ao indicador de impacto um significado verificável.'),
-  P('O escopo do MVP tem limites assumidos: a ordem das paradas segue uma heurística e não uma solução ótima, as condições sanitárias são declaradas pelo doador e não medidas, as notificações são internas e o vencimento é decidido por uma pessoa. A iniciativa também não está sozinha: programas como o Mesa Brasil Sesc já operam na região, de modo que a validação com doadores e ONGs reais é o passo que indicará se o ConectFome funciona como complemento, alternativa ou ferramenta para organizações menores.'),
+  P('O ConectaFome entrega um fluxo completo e rastreável para a redistribuição de alimentos: cadastro de doadores e receptores, oferta de doações com validade e condição de armazenamento, painel de oportunidades com reserva pelo receptor, rotas de coleta com mapa e verificação de capacidade, confirmação de recebimento, comprovantes e relatórios de alimento resgatado. A modelagem do ciclo de vida da doação como uma sequência de estados distintos, cada um com seu responsável e seu registro no histórico, é a decisão central e dá ao indicador de impacto um significado verificável.'),
+  P('O escopo do MVP tem limites assumidos: a ordem das paradas segue uma heurística e não uma solução ótima, as condições sanitárias são declaradas pelo doador e não medidas, as notificações são internas e o vencimento é decidido por uma pessoa. A iniciativa também não está sozinha: programas como o Mesa Brasil Sesc já operam na região, de modo que a validação com doadores e ONGs reais é o passo que indicará se o ConectaFome funciona como complemento, alternativa ou ferramenta para organizações menores.'),
   P('Do ponto de vista acadêmico, o projeto cumpriu o objetivo de integrar levantamento de requisitos, modelagem, desenvolvimento full stack, segurança, testes automatizados e implantação em um produto coerente com os ODS 2 e 12.'),
 ]
 
@@ -597,7 +597,7 @@ const sumario = [
 ]
 
 const doc = new Document({
-  creator: 'Equipe ConectFome',
+  creator: 'Equipe ConectaFome',
   title: `${NOME} – Documentação completa`,
   styles,
   numbering,
@@ -615,7 +615,7 @@ const doc = new Document({
 
 if (process.env.DUMP) fs.writeFileSync(path.join(__dirname, 'headings.json'), JSON.stringify(L.headings))
 Packer.toBuffer(doc).then((b) => {
-  const out = path.join(__dirname, '..', 'DOCUMENTACAO_CONECTFOME.docx')
+  const out = path.join(__dirname, '..', 'DOCUMENTACAO_CONECTAFOME.docx')
   fs.writeFileSync(out, b)
   console.log('ok', out, b.length)
 })

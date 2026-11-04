@@ -75,7 +75,7 @@ export function AppLayout() {
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Link to="/" aria-label="ConectFome, painel">
+          <Link to="/" aria-label="ConectaFome, painel">
             <Logo tone="light" size={30} />
           </Link>
           <button

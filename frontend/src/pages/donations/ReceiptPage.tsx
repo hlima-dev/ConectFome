@@ -56,7 +56,7 @@ export function ReceiptPage() {
 
       <article className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0">
         <header className="mb-6 border-b border-slate-200 pb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">ConectFome</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">ConectaFome</p>
           <h1 className="text-2xl font-semibold text-slate-900">Comprovante de doação de alimentos</h1>
           <p className="mt-1 text-sm text-slate-500">
             Nº <strong className="text-slate-800">{receipt.number}</strong> · emitido em {formatDateTime(receipt.issuedAt)}
@@ -106,7 +106,7 @@ export function ReceiptPage() {
         </section>
 
         <footer className="border-t border-slate-200 pt-4 text-xs text-slate-500">
-          Documento gerado pelo sistema ConectFome para registro e prestação de contas. Não substitui nota fiscal, recibo ou
+          Documento gerado pelo sistema ConectaFome para registro e prestação de contas. Não substitui nota fiscal, recibo ou
           outro documento exigido pela legislação aplicável.
         </footer>
       </article>

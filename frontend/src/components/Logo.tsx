@@ -6,7 +6,7 @@ interface LogoProps {
   className?: string
 }
 
-// Marca do ConectFome: um coração (quem doa e quem recebe) com uma folha
+// Marca do ConectaFome: um coração (quem doa e quem recebe) com uma folha
 // brotando no centro (alimento e sustentabilidade). Desenhada aqui em SVG, sem
 // imagem externa, para funcionar em qualquer tamanho e fundo.
 export function Logo({ size = 32, tone = 'dark', withText = true, className = '' }: LogoProps) {
@@ -14,7 +14,7 @@ export function Logo({ size = 32, tone = 'dark', withText = true, className = ''
   const leaf = tone === 'light' ? '#047857' : '#ffffff'
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label="ConectFome" fill="none">
+      <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label="ConectaFome" fill="none">
         <path
           d="M12 21.2s-8.2-5-9.9-10.3C1 7.4 2.9 4 6.4 4c2.1 0 3.8 1.1 5.6 3.1C13.8 5.1 15.5 4 17.6 4c3.5 0 5.4 3.4 4.3 6.9C20.2 16.2 12 21.2 12 21.2z"
           fill={heart}
@@ -25,7 +25,7 @@ export function Logo({ size = 32, tone = 'dark', withText = true, className = ''
       </svg>
       {withText && (
         <span className={`text-lg font-semibold tracking-tight ${tone === 'light' ? 'text-white' : 'text-emerald-900'}`}>
-          ConectFome
+          ConectaFome
         </span>
       )}
     </span>

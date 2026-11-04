@@ -26,5 +26,5 @@ export function resolveSeedPlan(env: NodeJS.ProcessEnv): SeedPlan {
     throw new Error(`ADMIN_PASSWORD deve ter ao menos ${MIN_ADMIN_PASSWORD_LENGTH} caracteres.`)
   }
 
-  return { mode: 'admin-only', name: env.ADMIN_NAME?.trim() || 'Administrador ConectFome', email, password }
+  return { mode: 'admin-only', name: env.ADMIN_NAME?.trim() || 'Administrador ConectaFome', email, password }
 }

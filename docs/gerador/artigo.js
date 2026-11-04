@@ -22,16 +22,16 @@ const ref = (t) => new Paragraph({ alignment: AlignmentType.LEFT, spacing: { aft
 const abs = (t) => P(t, { indent: false, size: 22, line: 300 })
 
 const head = [
-  center('ConectFome: uma plataforma web para rastrear a redistribuição de alimentos excedentes a instituições sociais', { bold: true, size: 30, color: GREEN, after: 200 }),
+  center('ConectaFome: uma plataforma web para rastrear a redistribuição de alimentos excedentes a instituições sociais', { bold: true, size: 30, color: GREEN, after: 200 }),
   center('João Albuquerque de Meneses, Lucas Lima Santos, Vitor Gimenez', { bold: true }),
   center('Centro Universitário Facens – Análise e Desenvolvimento de Sistemas', { size: 20, color: GRAY }),
   center('Orientadora: Brenda Medina de Oliveira · UPX2 – Usina de Projetos Experimentais II · Sorocaba/SP, 2026', { size: 20, color: GRAY, after: 280 }),
 
   new Paragraph({ spacing: { before: 120, after: 80 }, children: [new TextRun({ text: 'Resumo', bold: true, size: 24, font: FONT, color: GREEN })] }),
-  abs(`Mercados, restaurantes e feiras descartam alimentos próprios para consumo, enquanto 24,2% dos domicílios brasileiros convivem com algum grau de insegurança alimentar. A ligação entre os dois lados costuma depender de contatos informais, sem registro do que foi doado. Este trabalho apresenta o ConectFome, uma plataforma web que registra doações com validade e condição de armazenamento, oferece ao receptor um painel de oportunidades ordenado por urgência, organiza a coleta em rotas com mapa, verificação de capacidade do veículo e histórico de cada ação, e mede o alimento efetivamente resgatado. A pesquisa seguiu a abordagem de Design Science: o problema foi caracterizado com dados secundários, o artefato foi construído em fases incrementais (Node/Express, PostgreSQL/Prisma e React) e avaliado por testes automatizados (${M.backendTests} no backend, ${M.backendTestsPassed} aprovados) e por demonstração com dados sintéticos. O artefato implementa um ciclo de vida de doação com sete estados e 21 requisitos funcionais. A avaliação não envolveu usuários reais; a validação em campo com doadores e ONGs é o passo seguinte. Conclui-se que o artefato viabiliza o rastreio e a medição do resgate e atende às necessidades levantadas para os três perfis de usuário, restando demonstrar sua utilidade em operação real.`),
+  abs(`Mercados, restaurantes e feiras descartam alimentos próprios para consumo, enquanto 24,2% dos domicílios brasileiros convivem com algum grau de insegurança alimentar. A ligação entre os dois lados costuma depender de contatos informais, sem registro do que foi doado. Este trabalho apresenta o ConectaFome, uma plataforma web que registra doações com validade e condição de armazenamento, oferece ao receptor um painel de oportunidades ordenado por urgência, organiza a coleta em rotas com mapa, verificação de capacidade do veículo e histórico de cada ação, e mede o alimento efetivamente resgatado. A pesquisa seguiu a abordagem de Design Science: o problema foi caracterizado com dados secundários, o artefato foi construído em fases incrementais (Node/Express, PostgreSQL/Prisma e React) e avaliado por testes automatizados (${M.backendTests} no backend, ${M.backendTestsPassed} aprovados) e por demonstração com dados sintéticos. O artefato implementa um ciclo de vida de doação com sete estados e 21 requisitos funcionais. A avaliação não envolveu usuários reais; a validação em campo com doadores e ONGs é o passo seguinte. Conclui-se que o artefato viabiliza o rastreio e a medição do resgate e atende às necessidades levantadas para os três perfis de usuário, restando demonstrar sua utilidade em operação real.`),
   new Paragraph({ spacing: { before: 80, after: 160 }, children: L.runs('**Palavras-chave:** desperdício de alimentos; doação de alimentos; rastreabilidade; sistema web; ODS 2 e 12.', { size: 22 }) }),
   new Paragraph({ spacing: { before: 80, after: 80 }, children: [new TextRun({ text: 'Abstract', bold: true, size: 24, font: FONT, color: GREEN })] }),
-  abs('Supermarkets, restaurants and street markets discard food that is still fit for consumption, while 24.2% of Brazilian households face some degree of food insecurity. Connecting both sides usually relies on informal contacts, with no record of what was donated. This paper presents ConectFome, a web platform that records donations, gives recipients an urgency-sorted opportunities board, organizes pickup routes with a map and keeps an audit trail of every action, measuring the food actually rescued. Following a Design Science approach, the artifact was built incrementally and evaluated through automated tests and a demonstration with synthetic data. No real users took part in the evaluation, so its usefulness for donors and NGOs remains to be validated in the field.'),
+  abs('Supermarkets, restaurants and street markets discard food that is still fit for consumption, while 24.2% of Brazilian households face some degree of food insecurity. Connecting both sides usually relies on informal contacts, with no record of what was donated. This paper presents ConectaFome, a web platform that records donations, gives recipients an urgency-sorted opportunities board, organizes pickup routes with a map and keeps an audit trail of every action, measuring the food actually rescued. Following a Design Science approach, the artifact was built incrementally and evaluated through automated tests and a demonstration with synthetic data. No real users took part in the evaluation, so its usefulness for donors and NGOs remains to be validated in the field.'),
   new Paragraph({ spacing: { before: 40, after: 200 }, children: L.runs('**Keywords:** food waste; food donation; traceability; web system; SDG 2 and 12.', { size: 22 }) }),
 ]
 
@@ -40,7 +40,7 @@ const intro = [
   P('O desperdício de alimentos mobiliza dimensões sociais, econômicas e ambientais. O Food Waste Index 2024 estimou em 1,05 bilhão de toneladas o alimento desperdiçado no mundo em 2022, sendo 631 milhões de toneladas nos domicílios, o equivalente a 79 kg por pessoa por ano nesse nível de consumo (UNEP, 2024). Para o Brasil não há, nessa publicação, uma estimativa nacional consolidada: a Embrapa reporta cerca de 94 kg por habitante a partir de um estudo-piloto em cinco regiões da cidade do Rio de Janeiro (EMBRAPA, 2024), e as estimativas de volume anual encontradas em veículos de imprensa variam de 27 a 46 milhões de toneladas, o que mostra falta de consenso metodológico.'),
   P('Do outro lado da cadeia, a PNAD Contínua de 2024 identificou 18,9 milhões de domicílios (24,2% de 78,3 milhões) com algum grau de insegurança alimentar (IBGE, 2025). A Agenda 2030 trata os dois fenômenos nos Objetivos de Desenvolvimento Sustentável 2 (Fome Zero) e 12 (Consumo e Produção Responsáveis) (ONU, 2015).'),
   P('No plano legal, a Lei nº 14.016/2020, que autorizava a doação de excedentes, foi revogada pela Lei nº 15.224/2025, que institui a Política Nacional de Combate à Perda e ao Desperdício de Alimentos e o Selo Doador de Alimentos (BRASIL, 2025). Há, portanto, um ambiente normativo que incentiva a doação formalizada. Na prática, entretanto, a doação depende de iniciativas como o Mesa Brasil Sesc, que em Sorocaba distribuiu 88.762 kg a 36 instituições entre janeiro e setembro de 2018 (SESC SÃO PAULO, 2018), e de arranjos informais por mensagens e planilhas, que não deixam rastro do que foi doado, coletado e entregue.'),
-  P('Este artigo apresenta o ConectFome, desenvolvido na disciplina UPX2 do curso de Análise e Desenvolvimento de Sistemas da Facens, e tem como objetivo descrever o artefato, mostrar o que foi verificado e delimitar com franqueza o que ainda não foi.'),
+  P('Este artigo apresenta o ConectaFome, desenvolvido na disciplina UPX2 do curso de Análise e Desenvolvimento de Sistemas da Facens, e tem como objetivo descrever o artefato, mostrar o que foi verificado e delimitar com franqueza o que ainda não foi.'),
 ]
 
 const problema = [
@@ -80,7 +80,7 @@ const semVoluntarios = !('VolunteerService' in M.perFile && 'VehicleService' in 
 const resultados = [
   H1('4. Resultados'),
   H2('4.1 O artefato'),
-  P('O ConectFome é um monorepo com backend e frontend. A Tabela 1 resume suas dimensões. As contagens consideram os arquivos versionados no repositório na data da medição e são geradas por script, não digitadas.'),
+  P('O ConectaFome é um monorepo com backend e frontend. A Tabela 1 resume suas dimensões. As contagens consideram os arquivos versionados no repositório na data da medição e são geradas por script, não digitadas.'),
   table(
     ['Característica', 'Valor'],
     [
@@ -146,13 +146,13 @@ const discussao = [
   P('**A rastreabilidade registra quem, quando e o quê.** O histórico de eventos e o comprovante atendem à necessidade de formalização da persona doadora e podem apoiar o doador na obtenção do Selo Doador de Alimentos. O comprovante é um documento do sistema e não substitui eventuais exigências fiscais ou legais, que devem ser confirmadas no texto da Lei nº 15.224/2025 e na regulamentação aplicável.'),
   P('**A segurança sanitária é declaratória.** O doador informa a condição de armazenamento (ambiente, refrigerado ou congelado) e aceita uma declaração de que o alimento está próprio para consumo, mas o sistema não mede temperatura nem verifica a cadeia de frio. Materiais do Mesa Brasil Sesc São Paulo, por exemplo, orientam manter produtos de origem animal a 4 °C (resfriados) ou –18 °C (congelados). O uso real com perecíveis exige orientação sanitária à parte.'),
   P('**A roteirização é uma heurística.** A ordem sugerida das paradas usa o vizinho mais próximo e a distância em linha reta, sem considerar ruas, trânsito ou janelas de tempo. É suficiente para rotas curtas e serve como apoio à decisão do administrador, mas não deve ser lida como rota ótima.'),
-  P('**Relação com o que já existe.** Programas consolidados como o Mesa Brasil já fazem a ponte entre doadores e instituições. O diferencial possível do ConectFome é o rastreio por doação, o painel aberto ao receptor e o relatório por doador e receptor, em uma ferramenta aberta e de baixo custo; essa vantagem permanece hipotética até que doadores e instituições reais confirmem que o registro compensa o esforço.'),
+  P('**Relação com o que já existe.** Programas consolidados como o Mesa Brasil já fazem a ponte entre doadores e instituições. O diferencial possível do ConectaFome é o rastreio por doação, o painel aberto ao receptor e o relatório por doador e receptor, em uma ferramenta aberta e de baixo custo; essa vantagem permanece hipotética até que doadores e instituições reais confirmem que o registro compensa o esforço.'),
   P('**Ameaças à validade.** (i) Os dados de demonstração são sintéticos e não há avaliação com usuários. (ii) Os testes unitários usam o banco simulado, e os de integração cobrem apenas parte do sistema. (iii) A geocodificação depende de um serviço público e de endereços bem preenchidos. (iv) As estimativas de mercado dependem de dados secundários consultados por meio de publicações da imprensa e de páginas institucionais, e o cálculo por proporção populacional pode superestimar o público de Sorocaba, cuja renda per capita é superior à média nacional.'),
 ]
 
 const conclusao = [
   H1('6. Conclusões'),
-  bullet('O ConectFome implementa um fluxo completo de redistribuição, do cadastro e da oferta à confirmação de recebimento, com ciclo de sete estados, histórico de cada ação, comprovante e relatórios de alimento resgatado por mês, por doador e por receptor.'),
+  bullet('O ConectaFome implementa um fluxo completo de redistribuição, do cadastro e da oferta à confirmação de recebimento, com ciclo de sete estados, histórico de cada ação, comprovante e relatórios de alimento resgatado por mês, por doador e por receptor.'),
   bullet(`As regras de transição e de permissão são verificadas por testes automatizados (${M.backendTestsPassed} de ${M.backendTests} aprovados no backend na última medição).`),
   bullet('O artefato atende às necessidades levantadas para a doadora, o receptor e a administradora: painel de oportunidades com urgência, rotas com mapa e capacidade do veículo, comprovante e histórico.'),
   bullet('Os limites assumidos são a roteirização heurística, a segurança sanitária declaratória e a ausência de notificações externas.'),
@@ -182,21 +182,21 @@ const refs = [
 ]
 
 const doc = new Document({
-  creator: 'Equipe ConectFome',
-  title: 'ConectFome – Artigo',
+  creator: 'Equipe ConectaFome',
+  title: 'ConectaFome – Artigo',
   styles,
   numbering,
   sections: [
     {
       properties: { page: PAGE },
-      footers: { default: footer('ConectFome · Artigo') },
+      footers: { default: footer('ConectaFome · Artigo') },
       children: [...head, ...intro, ...problema, ...metodo, ...resultados, ...discussao, ...conclusao, ...futuros, ...refs],
     },
   ],
 })
 
 Packer.toBuffer(doc).then((b) => {
-  const out = path.join(__dirname, '..', 'ARTIGO_CONECTFOME.docx')
+  const out = path.join(__dirname, '..', 'ARTIGO_CONECTAFOME.docx')
   fs.writeFileSync(out, b)
   console.log('ok', out, b.length)
 })

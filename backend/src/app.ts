@@ -50,7 +50,7 @@ app.use(requestLogger)
 app.use(verifyCsrf)
 
 app.get('/', (_req, res) => {
-  return res.status(200).json({ status: 'ok', message: 'ConectFome API online' })
+  return res.status(200).json({ status: 'ok', message: 'ConectaFome API online' })
 })
 
 app.get('/health', (_req, res) => {

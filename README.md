@@ -1,4 +1,4 @@
-# 🍎 ConectFome
+# 🍎 ConectaFome
 
 Plataforma de doação e resgate de alimentos que conecta **doadores**
 (mercados, restaurantes, feiras) a **receptores** (ONGs e famílias em
@@ -12,7 +12,7 @@ Todos os dias, mercados, restaurantes e feiras descartam alimentos em
 condições de consumo — só não vendáveis pelo padrão estético ou pelo
 prazo comercial, não pela segurança alimentar. Do outro lado, ONGs e
 famílias em vulnerabilidade enfrentam insegurança alimentar diária. O
-ConectFome existe para fechar essa distância: cadastro de doadores e
+ConectaFome existe para fechar essa distância: cadastro de doadores e
 receptores, agendamento de coleta com rotas e voluntários, e um
 relatório de quanto alimento foi efetivamente resgatado por mês.
 
@@ -22,7 +22,7 @@ relatório de quanto alimento foi efetivamente resgatado por mês.
   evento registrado e mensurável, não uma promessa.
 - **ODS 12 — Consumo e Produção Responsáveis**: o alimento resgatado é
   produção que já aconteceu — energia, água e trabalho já gastos — que
-  o ConectFome evita jogar fora. O relatório de kg resgatado por mês
+  o ConectaFome evita jogar fora. O relatório de kg resgatado por mês
   (`/relatorios`) é o indicador direto desse impacto, e o estado
   `VENCIDA` existe para tornar visível, e não esconder, o que ainda se
   perde antes da coleta.
@@ -271,7 +271,7 @@ indicado; nunca aponte para um banco com dados.
 - **Voluntários não têm login** — são geridos pelo admin, como no
   `Driver` do projeto de referência (PRODUCTION ERP); no mundo real,
   esse público tende a operar por telefone/WhatsApp, não por painel web.
-- **Plataforma única, sem multi-tenant** — ConectFome é uma rede só de
+- **Plataforma única, sem multi-tenant** — ConectaFome é uma rede só de
   doadores/receptores, não um SaaS com múltiplas organizações isoladas
   (diferente do ATHLO, de onde vem a fundação de auth).
 

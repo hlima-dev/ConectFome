@@ -1,6 +1,6 @@
 # Publicação (Supabase + Render + Vercel)
 
-Este guia leva o ConectFome do repositório ao ar. **Ele não foi executado de
+Este guia leva o ConectaFome do repositório ao ar. **Ele não foi executado de
 ponta a ponta**: o ambiente de desenvolvimento não tem acesso a essas
 plataformas. O que foi validado localmente é o caminho de produção (build,
 migração, seed só do administrador, `npm start`, `scripts/smoke.sh`). Rode o

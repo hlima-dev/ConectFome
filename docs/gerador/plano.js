@@ -33,7 +33,7 @@ const pesquisa = [
   ['R4', '**Conferir fontes primárias.** ABRAS (424.120 lojas), Abrasel (1,35 milhão de empresas), IBGE PNAD 2024, Censo 2022, UNEP e Embrapa; trocar citações de imprensa por links oficiais e datas de acesso.', 'Seções 4, 13 e 16; artigo, referências', 'João', 4],
   ['R5', '**Base legal e sanitária.** Ler o texto da Lei 15.224/2025 (responsabilidade do doador, Selo Doador, exigências) e consultar a orientação sanitária local. Ajustar as menções na Seção 4 e na discussão do artigo ao que o texto realmente diz.', 'Seção 4; artigo 5', 'João + Lucas', 3],
   ['R6', '**Evidências de gestão.** Anexar o protótipo do Figma (link ou PDF) e um print atualizado do Trello com o andamento.', 'Seções 5 e 6.1', 'Vitor + João', 3],
-  ['R7', '**Consistência de equipe e nome.** Escolher um nome (ConectFome, DOA+ ou ConectaFome) e usar em tudo; confirmar integrantes (o Trello mostra 4 membros, os documentos listam 3) e funções (o Trello lista 8 cargos, os documentos descrevem 6).', 'Capa, Seções 1 e 7', 'João', 1],
+  ['R7', '**Consistência de equipe e nome.** Escolher um nome (ConectaFome, DOA+ ou ConectaFome) e usar em tudo; confirmar integrantes (o Trello mostra 4 membros, os documentos listam 3) e funções (o Trello lista 8 cargos, os documentos descrevem 6).', 'Capa, Seções 1 e 7', 'João', 1],
   ['R8', '**Validar com a orientadora** a estrutura exigida, o formato ABNT e o tamanho do artigo.', 'Todos', 'João', 1],
 ]
 
@@ -61,7 +61,7 @@ const W = [560, 3650, 1300, 1000, 600, 1961]
 
 const head = [
   center('PLANO DE FECHAMENTO DO PROJETO', { bold: true, size: 32, color: GREEN, after: 60 }),
-  center('ConectFome · UPX2 · Facens', { size: 22, color: GRAY, after: 240 }),
+  center('ConectaFome · UPX2 · Facens', { size: 22, color: GRAY, after: 240 }),
 ]
 
 const intro = [
@@ -123,11 +123,11 @@ const resumo = [
 ]
 
 const doc = new Document({
-  creator: 'Equipe ConectFome',
-  title: 'ConectFome – Plano de fechamento',
+  creator: 'Equipe ConectaFome',
+  title: 'ConectaFome – Plano de fechamento',
   styles,
   numbering,
-  sections: [{ properties: { page: PAGE }, footers: { default: footer('ConectFome · Plano de fechamento') },
+  sections: [{ properties: { page: PAGE }, footers: { default: footer('ConectaFome · Plano de fechamento') },
     children: [...head, ...intro, ...sec('3. Código: o que construir', codigo), ...sec('4. Pesquisa e validação: o que só a equipe pode fazer', pesquisa), ...sec('5. Fechamento dos documentos', docs), ...resumo, ...ordem] }],
 })
 Packer.toBuffer(doc).then((b) => {

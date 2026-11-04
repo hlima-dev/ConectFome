@@ -25,7 +25,7 @@ const groupLabel = {
 }
 
 const cover = [
-  new Paragraph({ spacing: { before: 2400, after: 120 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'ConectFome', font: FONT, size: 64, bold: true, color: GREEN })] }),
+  new Paragraph({ spacing: { before: 2400, after: 120 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'ConectaFome', font: FONT, size: 64, bold: true, color: GREEN })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [new TextRun({ text: 'Catálogo de telas do sistema', font: FONT, size: 32, color: DARK })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 120 }, children: L.runs(`${catalog.length} telas capturadas com o sistema em funcionamento`, { size: 24, color: GRAY }) }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 600 }, children: L.runs('UPX2 · Centro Universitário Facens · 2026', { size: 22, color: GRAY }) }),
@@ -74,15 +74,15 @@ for (const g of groups) {
 }
 
 const doc = new Document({
-  creator: 'Equipe ConectFome',
-  title: 'ConectFome – Catálogo de telas',
+  creator: 'Equipe ConectaFome',
+  title: 'ConectaFome – Catálogo de telas',
   styles,
   numbering,
-  sections: [{ properties: { page: PAGE }, footers: { default: footer('ConectFome · Catálogo de telas') }, children: [...cover, ...index, ...pages] }],
+  sections: [{ properties: { page: PAGE }, footers: { default: footer('ConectaFome · Catálogo de telas') }, children: [...cover, ...index, ...pages] }],
 })
 
 Packer.toBuffer(doc).then((b) => {
-  const out = path.join(__dirname, '..', 'TELAS_CONECTFOME.docx')
+  const out = path.join(__dirname, '..', 'TELAS_CONECTAFOME.docx')
   fs.writeFileSync(out, b)
   console.log('ok', out, b.length)
 })
