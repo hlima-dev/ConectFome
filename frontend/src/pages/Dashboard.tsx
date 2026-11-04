@@ -6,6 +6,7 @@ import { getStoredUser } from '../services/auth'
 import { ROLE_LABELS } from '../types/auth'
 import { useMonthlyKg, useReportSummary } from '../hooks/useReports'
 import { DONATION_STATUS_LABELS, type DonationStatus } from '../types/donations'
+import { formatKg } from '../utils/format'
 
 interface KpiCardProps {
   label: string
@@ -84,7 +85,7 @@ export function Dashboard() {
       {isAdmin && summary && (
         <>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <KpiCard icon={Leaf} label="Kg resgatado (total)" value={`${summary.totalKgRescued} kg`} />
+            <KpiCard icon={Leaf} label="Kg resgatado (total)" value={formatKg(summary.totalKgRescued)} />
             <KpiCard icon={Boxes} label="Doações resgatadas" value={summary.totalDonationsRescued} />
             <KpiCard icon={PackageCheck} label="Doações entregues" value={summary.deliveredDonations} />
             <KpiCard icon={Truck} label="Rotas concluídas" value={summary.completedRoutes} />
@@ -106,7 +107,7 @@ export function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                       <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
                       <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
-                      <Tooltip formatter={(value: number) => [`${value} kg`, 'Resgatado']} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
+                      <Tooltip formatter={(value: number) => [formatKg(value), 'Resgatado']} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
                       <Bar dataKey="totalKg" fill="#047857" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                     </BarChart>
                   </ResponsiveContainer>

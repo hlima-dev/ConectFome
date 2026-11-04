@@ -7,6 +7,7 @@ import { UrgencyBadge } from '../../components/UrgencyBadge'
 import { formatTimeLeft } from '../../utils/time'
 import { useOpportunities, useReserveDonation } from '../../hooks/useDonations'
 import { getErrorMessage } from '../../utils/errors'
+import { formatKg } from '../../utils/format'
 import {
   FOOD_CATEGORY_LABELS,
   STORAGE_CONDITION_LABELS,
@@ -113,7 +114,7 @@ export function OpportunitiesPage() {
               <div>
                 <h2 className="font-semibold text-slate-900">{opportunity.description}</h2>
                 <p className="text-sm text-slate-500">
-                  {FOOD_CATEGORY_LABELS[opportunity.category]} · {opportunity.estimatedQuantityKg} kg
+                  {FOOD_CATEGORY_LABELS[opportunity.category]} · {formatKg(opportunity.estimatedQuantityKg)}
                 </p>
               </div>
               <UrgencyBadge urgency={opportunity.urgency} />
@@ -157,7 +158,7 @@ export function OpportunitiesPage() {
       {reserving && (
         <ConfirmDialog
           title="Reservar doação"
-          message={`Reservar “${reserving.description}” (${reserving.estimatedQuantityKg} kg) para a sua instituição? A coleta é combinada pela administração; se não puder buscar, libere a reserva na tela da doação.`}
+          message={`Reservar “${reserving.description}” (${formatKg(reserving.estimatedQuantityKg)}) para a sua instituição? A coleta é combinada pela administração; se não puder buscar, libere a reserva na tela da doação.`}
           confirmLabel="Reservar"
           isLoading={reserve.isPending}
           onConfirm={confirmReserve}

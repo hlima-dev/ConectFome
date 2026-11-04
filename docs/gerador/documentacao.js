@@ -6,6 +6,9 @@ const {
 } = L
 
 const M = require('./metrics.json')
+const telasDir = path.join(__dirname, '..', 'telas')
+const telasCatalog = fs.existsSync(path.join(telasDir, 'catalogo.json')) ? JSON.parse(fs.readFileSync(path.join(telasDir, 'catalogo.json'), 'utf8')) : []
+const telaPorTitulo = (trecho) => telasCatalog.find((t) => t.title.toLowerCase().includes(trecho.toLowerCase()))
 const NOME = 'ConectFome'
 const SUB = 'Plataforma de Doação e Redistribuição de Alimentos'
 
@@ -140,6 +143,7 @@ const s6 = [
       ['Testes', 'Vitest e Testing Library', 'Testes unitários (Prisma simulado), de integração com PostgreSQL real e de componentes'],
       ['Integração contínua', 'GitHub Actions', 'Instala, audita dependências, executa os testes (inclusive de integração com banco) e compila backend e frontend'],
       ['Implantação', 'Render (API), Vercel (frontend), Supabase (PostgreSQL)', 'Arquivos render.yaml e vercel.json no repositório'],
+      ['Verificação ponta a ponta', 'Playwright', 'Roteiro em navegador real que percorre o fluxo completo e captura as telas'],
       ['Gestão e design', 'Trello, Figma, Git/GitHub', 'Tarefas, protótipo e versionamento'],
     ],
     [1700, 3000, 4371],
@@ -227,7 +231,7 @@ const s8 = [
       ['RF05', 'Registro de doação: categoria, descrição, quantidade estimada em kg, validade, janela de coleta, condição de armazenamento (ambiente, refrigerado ou congelado), observações e declaração de que o alimento está próprio para consumo', 'Doador, administrador'],
       ['RF06', 'Edição da doação somente enquanto estiver disponível', 'Doador, administrador'],
       ['RF07', 'Painel de oportunidades: doações disponíveis, filtráveis por cidade e categoria e ordenadas por urgência', 'Receptor'],
-      ['RF08', 'Reserva da doação pelo próprio receptor; casamento ou reatribuição pelo administrador', 'Receptor, administrador'],
+      ['RF08', 'Reserva da doação pelo próprio receptor, com liberação da reserva (enquanto a doação não estiver em rota); casamento ou reatribuição pelo administrador', 'Receptor, administrador'],
       ['RF09', 'Cancelamento e marcação como vencida, a partir de disponível ou reservada', 'Doador, administrador'],
       ['RF10', 'Indicador de urgência (alerta de validade e de fim da janela de coleta) nas listagens e no painel', 'Todos'],
       ['RF11', 'Notificações internas nos eventos relevantes (nova doação, reserva, agendamento em rota, coleta, entrega e cancelamento)', 'Todos'],
@@ -279,6 +283,7 @@ const s8 = [
       ['Gerenciar doadores e receptores', 'Todos', 'Apenas o próprio cadastro', 'Apenas o próprio cadastro'],
       ['Registrar e editar doação', 'Em nome de qualquer doador', 'Apenas as próprias', 'Não'],
       ['Ver oportunidades e reservar', 'Sim (casa ou reatribui)', 'Não', 'Sim, para si'],
+      ['Liberar uma reserva', 'Sim', 'Não', 'Apenas as próprias'],
       ['Cancelar / marcar vencida', 'Sim', 'Apenas as próprias', 'Não'],
       ['Confirmar recebimento', 'Sim', 'Não', 'Apenas as destinadas a ele'],
       ['Comprovante da doação', 'Todos', 'Apenas as próprias', 'Não'],
@@ -300,7 +305,7 @@ const s8 = [
   H2('8.9 Comprovantes e relatórios'),
   P('Para cada doação coletada ou entregue, o doador pode emitir um comprovante imprimível com os dados das partes, a quantidade coletada e as datas. O módulo de relatórios oferece o total de quilogramas resgatados por mês (com a contagem de doações), o ranking por doador e por receptor, as taxas de resgate, perda e entrega, o total de pessoas atendidas e um resumo para o painel do administrador. Os dados podem ser exportados em CSV.'),
   H2('8.10 Testes e implantação'),
-  P(`O backend possui ${M.backendTests} testes automatizados em ${M.backendTestFiles} arquivos (${M.backendTestsPassed} aprovados na última medição, em ${M.generatedAt}), que cobrem as regras dos services e os middlewares de segurança. Além dos testes unitários com o Prisma simulado, há testes de integração contra um PostgreSQL real, que validam a consulta SQL dos relatórios e as transações de conclusão de rota. O frontend tem testes de componente nas telas principais. Todos os testes e a compilação rodam a cada push na integração contínua.`),
+  P(`O backend possui ${M.backendTests} testes automatizados em ${M.backendTestFiles} arquivos (${M.backendTestsPassed} aprovados na última medição, em ${M.generatedAt}), que cobrem as regras dos services e os middlewares de segurança. Além dos testes unitários com o Prisma simulado, há ${M.integrationTests ?? 'testes'} testes de integração contra um PostgreSQL real, que validam as consultas SQL dos relatórios, as transações de rota e a reserva simultânea. O frontend tem ${M.frontendTests} testes de componente, cobrindo as telas principais (formulário de doação, oportunidades, rota, comprovante, relatórios e painel). Parte desses testes de integração sobe a API de verdade e confere, pela rede, a autenticação, a proteção CSRF e a matriz de permissões por papel. Por fim, um roteiro em navegador real percorre o fluxo completo com doador, receptor e administrador e captura as ${telasCatalog.length || 49} telas do sistema (catálogo em anexo). Os testes e a compilação rodam a cada push na integração contínua.`),
   fig('testes_por_modulo.png', 440),
   caption('Figura 5 – Testes automatizados do backend por arquivo.'),
   P('A implantação está descrita por um blueprint do Render para a API (que executa migração e carga inicial ao subir) e por um arquivo de configuração da Vercel para o frontend, com o banco PostgreSQL externo, no Supabase.'),
@@ -316,10 +321,36 @@ const s8 = [
       ['Foto da doação', 'Melhoria de usabilidade; a descrição basta para o fluxo'],
       ['Login e aplicativo para voluntários', 'Voluntários são geridos pelo administrador; app móvel consta em Estudos Futuros'],
       ['Verificação de e-mail e recuperação de senha', 'Reduz a superfície de configuração do MVP'],
+      ['Página de perfil do usuário e de configurações', 'O cadastro pode ser alterado pela administração; uma tela de autoatendimento fica para uma próxima versão'],
+      ['Exportação dos relatórios em PDF', 'A exportação é em CSV (abre no Excel); o comprovante de cada doação é imprimível e pode ser salvo em PDF pelo navegador'],
     ],
     [3600, 5471],
   ),
   spacer(),
+
+  H2('8.12 Telas do sistema'),
+  P('As telas abaixo foram capturadas com o sistema em funcionamento, por um roteiro automatizado que percorre o fluxo completo (dados de demonstração). O catálogo com todas as telas segue em anexo. No mapa da rota, o fundo cinza se deve ao ambiente de captura não ter acesso à internet; em uso normal o mapa exibe as ruas do OpenStreetMap.'),
+  ...[
+    ['Pagina inicial', 'Página inicial pública', 330],
+    ['Dashboard apos', 'Dashboard administrativo', 520],
+    ['Painel de oportunidades', 'Painel de oportunidades do receptor', 330],
+    ['Rota com mapa', 'Rota de coleta com mapa, ordem das paradas e carga do veículo', 330],
+    ['Doacao entregue com historico', 'Doação entregue, com o histórico de cada ação', 330],
+    ['Comprovante de doacao', 'Comprovante de doação', 330],
+    ['Relatorios', 'Relatórios e indicadores do período', 330],
+    ['Dashboard do administrador', 'Versão para celular (dashboard)', 220],
+  ].flatMap(([trecho, legenda, largura], i) => {
+    const t = telaPorTitulo(trecho)
+    if (!t) return []
+    const b = fs.readFileSync(path.join(telasDir, t.file))
+    const w = b.readUInt32BE(16), h = b.readUInt32BE(20)
+    const maxH = 560
+    const k = Math.min(1, largura / w, maxH / h)
+    return [
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120, after: 60 }, keepNext: true, children: [new L.ImageRun({ type: 'png', data: b, transformation: { width: Math.round(w * k), height: Math.round(h * k) } })] }),
+      caption(`Tela ${i + 1} – ${legenda}.`),
+    ]
+  }),
 ]
 
 // ───────────────────────── 9. RESULTADOS ESPERADOS ─────────────────────────

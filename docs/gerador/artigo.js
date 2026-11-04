@@ -4,6 +4,8 @@ const {
   fs, path, Document, Packer, Paragraph, TextRun, AlignmentType,
   P, PN, H1, H2, bullet, caption, table, img, spacer, styles, numbering, footer, PAGE, FONT, GREEN, DARK, GRAY,
 } = L
+const telasFile = path.join(__dirname, '..', 'telas', 'catalogo.json')
+const nTelas = fs.existsSync(telasFile) ? JSON.parse(fs.readFileSync(telasFile, 'utf8')).length : 0
 
 function size(file, w) {
   const b = fs.readFileSync(path.join(__dirname, '..', 'figuras', file))
@@ -57,7 +59,7 @@ const metodo = [
       ['Objetivos da solução', 'Três personas (doador, receptor e administrador), canvas de proposta de valor e Lean Canvas; 21 requisitos funcionais'],
       ['Projeto e desenvolvimento', 'Modelo relacional; API REST em Node.js/Express/TypeScript com Prisma e PostgreSQL; interface em React, Vite e Tailwind; mapa com Leaflet e OpenStreetMap; fases incrementais, uma por módulo'],
       ['Demonstração', 'Dados de exemplo (seed) com contas dos três papéis e doações em estados distintos, e leitura do relatório produzido'],
-      ['Avaliação', 'Testes automatizados unitários, de integração e de componentes; análise da cobertura por área; confronto do que foi entregue com as necessidades das personas'],
+      ['Avaliação', 'Testes automatizados unitários, de integração (incluindo a API pela rede) e de componentes; roteiro ponta a ponta em navegador real; análise da cobertura por área; confronto do que foi entregue com as necessidades das personas'],
       ['Comunicação', 'Este artigo e a documentação do projeto'],
     ],
     [2400, 6671],
@@ -96,7 +98,7 @@ const resultados = [
   fig('ciclo_doacao.png', 540),
   caption('Figura 1 – Ciclo de vida da doação implementado.'),
   H2('4.2 Testes automatizados'),
-  P(`Na medição de ${M.generatedAt}, os ${M.backendTestFiles} arquivos de teste do backend somaram ${M.backendTests} testes, dos quais ${M.backendTestsPassed} foram aprovados (Figura 2), além de ${M.frontendTests} testes de componente em ${M.frontendTestFiles} arquivos do frontend. As regras mais exercitadas são as de transição de estado e de permissão: por exemplo, rejeitar a reserva de uma doação que não esteja disponível, impedir que outro doador cancele a doação alheia, impedir a confirmação de recebimento antes da coleta, rejeitar o início de uma rota sem doações e devolver as doações ao estado reservada quando a rota é cancelada.`),
+  P(`Na medição de ${M.generatedAt}, os ${M.backendTestFiles} arquivos de teste do backend somaram ${M.backendTests} testes, dos quais ${M.backendTestsPassed} foram aprovados (Figura 2), além de ${M.integrationTests ?? 0} testes de integração contra PostgreSQL real (${M.integrationTestsPassed ?? 0} aprovados) e ${M.frontendTests} testes de componente em ${M.frontendTestFiles} arquivos do frontend. As regras mais exercitadas são as de transição de estado e de permissão: por exemplo, rejeitar a reserva de uma doação que não esteja disponível, impedir que outro doador cancele a doação alheia, impedir a confirmação de recebimento antes da coleta, rejeitar o início de uma rota sem doações e devolver as doações ao estado reservada quando a rota é cancelada.`),
   fig('testes_por_modulo.png', 420),
   caption(`Figura 2 – Testes automatizados do backend por arquivo (${M.backendTests} no total).`),
   P('A Tabela 2 mostra a distribuição dos testes por área do sistema.' + (semVoluntarios ? ' Os cadastros de voluntários e veículos ainda não têm arquivo de teste próprio.' : '')),
@@ -117,7 +119,9 @@ const resultados = [
   ),
   caption('Tabela 3 – Tratamento de um conjunto de exemplo pelo relatório de kg resgatado.'),
   P('O exemplo ilustra duas propriedades do modelo: a diferença entre a quantidade estimada pelo doador (35 kg) e a coletada na rota (32 kg) fica registrada, e o que se perdeu antes da coleta (8 kg de iogurte) aparece como estado próprio, em vez de desaparecer do relatório.'),
-  H2('4.4 Atendimento às personas'),
+  H2('4.4 Verificação ponta a ponta'),
+  P(`Além dos testes de unidade e de integração, um roteiro automatizado em navegador real percorre o fluxo completo com os três perfis: um doador se cadastra e registra uma doação urgente; uma ONG vê o aviso, encontra a doação no topo do painel de oportunidades e a reserva; o administrador reserva outra doação para a mesma ONG, monta uma rota com duas paradas (o sistema mostra a ordem sugerida, a distância e a carga), inicia a rota e a conclui informando o peso realmente coletado; a ONG confirma o recebimento; o doador emite o comprovante e vê o aviso de entrega; e o administrador consulta os indicadores. Cada passo confere o resultado esperado e o roteiro falha se algo não ocorrer. Ele também salva ${nTelas || 49} telas, reunidas em um catálogo anexo, e foi repetido com o banco recriado. Isso mostra que o fluxo funciona de ponta a ponta com dados de demonstração; não substitui a avaliação com usuários reais.`),
+  H2('4.5 Atendimento às personas'),
   table(
     ['Necessidade apontada', 'Persona', 'Como o sistema atende'],
     [

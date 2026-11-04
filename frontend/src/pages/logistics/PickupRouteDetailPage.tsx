@@ -16,6 +16,7 @@ import { useDonations } from '../../hooks/useDonations'
 import { DONATION_STATUS_LABELS, DONATION_STATUS_TONES } from '../../types/donations'
 import { PICKUP_ROUTE_STATUS_LABELS, PICKUP_ROUTE_STATUS_TONES } from '../../types/logistics'
 import { getErrorMessage } from '../../utils/errors'
+import { formatKg } from '../../utils/format'
 
 function formatDate(value: string | null) {
   if (!value) return '—'
@@ -189,7 +190,7 @@ export function PickupRouteDetailPage() {
                           onChange={(e) => setCollected((prev) => ({ ...prev, [donation.id]: e.target.value }))}
                         />
                       ) : (
-                        `${donation.collectedQuantityKg ?? donation.estimatedQuantityKg} kg`
+                        formatKg(donation.collectedQuantityKg ?? donation.estimatedQuantityKg)
                       )}
                     </td>
                     {isPlanned && (

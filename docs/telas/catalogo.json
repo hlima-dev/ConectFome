@@ -1,0 +1,352 @@
+[
+  {
+    "n": 1,
+    "file": "01-publicas-pagina-inicial.png",
+    "group": "Publicas",
+    "title": "Pagina inicial",
+    "mobile": false
+  },
+  {
+    "n": 2,
+    "file": "02-publicas-login.png",
+    "group": "Publicas",
+    "title": "Login",
+    "mobile": false
+  },
+  {
+    "n": 3,
+    "file": "03-publicas-login-com-credenciais-invalidas.png",
+    "group": "Publicas",
+    "title": "Login com credenciais invalidas",
+    "mobile": false
+  },
+  {
+    "n": 4,
+    "file": "04-publicas-cadastro-de-doador.png",
+    "group": "Publicas",
+    "title": "Cadastro de doador",
+    "mobile": false
+  },
+  {
+    "n": 5,
+    "file": "05-publicas-cadastro-de-receptor.png",
+    "group": "Publicas",
+    "title": "Cadastro de receptor",
+    "mobile": false
+  },
+  {
+    "n": 6,
+    "file": "06-publicas-cadastro-de-doador-preenchido.png",
+    "group": "Publicas",
+    "title": "Cadastro de doador preenchido",
+    "mobile": false
+  },
+  {
+    "n": 7,
+    "file": "07-doador-painel-do-doador-recem-cadastrado.png",
+    "group": "Doador",
+    "title": "Painel do doador recem cadastrado",
+    "mobile": false
+  },
+  {
+    "n": 8,
+    "file": "08-doador-painel.png",
+    "group": "Doador",
+    "title": "Painel",
+    "mobile": false
+  },
+  {
+    "n": 9,
+    "file": "09-doador-minhas-doacoes.png",
+    "group": "Doador",
+    "title": "Minhas doacoes",
+    "mobile": false
+  },
+  {
+    "n": 10,
+    "file": "10-doador-nova-doacao-com-validacoes.png",
+    "group": "Doador",
+    "title": "Nova doacao com validacoes",
+    "mobile": false
+  },
+  {
+    "n": 11,
+    "file": "11-doador-nova-doacao-preenchida.png",
+    "group": "Doador",
+    "title": "Nova doacao preenchida",
+    "mobile": false
+  },
+  {
+    "n": 12,
+    "file": "12-doador-lista-apos-cadastrar-a-doacao.png",
+    "group": "Doador",
+    "title": "Lista apos cadastrar a doacao",
+    "mobile": false
+  },
+  {
+    "n": 13,
+    "file": "13-doador-detalhe-da-doacao-com-historico.png",
+    "group": "Doador",
+    "title": "Detalhe da doacao com historico",
+    "mobile": false
+  },
+  {
+    "n": 14,
+    "file": "14-receptor-painel.png",
+    "group": "Receptor",
+    "title": "Painel",
+    "mobile": false
+  },
+  {
+    "n": 15,
+    "file": "15-receptor-notificacoes-sino.png",
+    "group": "Receptor",
+    "title": "Notificacoes (sino)",
+    "mobile": false
+  },
+  {
+    "n": 16,
+    "file": "16-receptor-painel-de-oportunidades.png",
+    "group": "Receptor",
+    "title": "Painel de oportunidades",
+    "mobile": false
+  },
+  {
+    "n": 17,
+    "file": "17-receptor-confirmar-reserva.png",
+    "group": "Receptor",
+    "title": "Confirmar reserva",
+    "mobile": false
+  },
+  {
+    "n": 18,
+    "file": "18-receptor-reserva-concluida.png",
+    "group": "Receptor",
+    "title": "Reserva concluida",
+    "mobile": false
+  },
+  {
+    "n": 19,
+    "file": "19-receptor-minhas-doacoes.png",
+    "group": "Receptor",
+    "title": "Minhas doacoes",
+    "mobile": false
+  },
+  {
+    "n": 20,
+    "file": "20-receptor-detalhe-da-doacao-reservada.png",
+    "group": "Receptor",
+    "title": "Detalhe da doacao reservada",
+    "mobile": false
+  },
+  {
+    "n": 21,
+    "file": "21-administrador-dashboard.png",
+    "group": "Administrador",
+    "title": "Dashboard",
+    "mobile": false
+  },
+  {
+    "n": 22,
+    "file": "22-administrador-doadores.png",
+    "group": "Administrador",
+    "title": "Doadores",
+    "mobile": false
+  },
+  {
+    "n": 23,
+    "file": "23-administrador-cadastro-de-doador-edicao-com-endereco.png",
+    "group": "Administrador",
+    "title": "Cadastro de doador (edicao com endereco)",
+    "mobile": false
+  },
+  {
+    "n": 24,
+    "file": "24-administrador-receptores.png",
+    "group": "Administrador",
+    "title": "Receptores",
+    "mobile": false
+  },
+  {
+    "n": 25,
+    "file": "25-administrador-voluntarios.png",
+    "group": "Administrador",
+    "title": "Voluntarios",
+    "mobile": false
+  },
+  {
+    "n": 26,
+    "file": "26-administrador-veiculos.png",
+    "group": "Administrador",
+    "title": "Veiculos",
+    "mobile": false
+  },
+  {
+    "n": 27,
+    "file": "27-administrador-doacoes-todas-com-urgencia.png",
+    "group": "Administrador",
+    "title": "Doacoes (todas, com urgencia)",
+    "mobile": false
+  },
+  {
+    "n": 28,
+    "file": "28-administrador-casar-doacao-com-receptor.png",
+    "group": "Administrador",
+    "title": "Casar doacao com receptor",
+    "mobile": false
+  },
+  {
+    "n": 29,
+    "file": "29-administrador-detalhe-da-doacao-reservada-pela-administracao.png",
+    "group": "Administrador",
+    "title": "Detalhe da doacao reservada pela administracao",
+    "mobile": false
+  },
+  {
+    "n": 30,
+    "file": "30-administrador-rotas-de-coleta.png",
+    "group": "Administrador",
+    "title": "Rotas de coleta",
+    "mobile": false
+  },
+  {
+    "n": 31,
+    "file": "31-administrador-nova-rota.png",
+    "group": "Administrador",
+    "title": "Nova rota",
+    "mobile": false
+  },
+  {
+    "n": 32,
+    "file": "32-administrador-rota-nova-sem-doacoes.png",
+    "group": "Administrador",
+    "title": "Rota nova, sem doacoes",
+    "mobile": false
+  },
+  {
+    "n": 33,
+    "file": "33-administrador-rota-com-mapa-ordem-das-paradas-e-carga.png",
+    "group": "Administrador",
+    "title": "Rota com mapa, ordem das paradas e carga",
+    "mobile": false
+  },
+  {
+    "n": 34,
+    "file": "34-administrador-rota-em-andamento-kg-coletado.png",
+    "group": "Administrador",
+    "title": "Rota em andamento, kg coletado",
+    "mobile": false
+  },
+  {
+    "n": 35,
+    "file": "35-administrador-rota-concluida.png",
+    "group": "Administrador",
+    "title": "Rota concluida",
+    "mobile": false
+  },
+  {
+    "n": 36,
+    "file": "36-administrador-rotas-de-coleta-apos-concluir.png",
+    "group": "Administrador",
+    "title": "Rotas de coleta apos concluir",
+    "mobile": false
+  },
+  {
+    "n": 37,
+    "file": "37-receptor-doacao-coletada-aguardando-confirmacao.png",
+    "group": "Receptor",
+    "title": "Doacao coletada aguardando confirmacao",
+    "mobile": false
+  },
+  {
+    "n": 38,
+    "file": "38-receptor-doacao-entregue-com-historico-completo.png",
+    "group": "Receptor",
+    "title": "Doacao entregue com historico completo",
+    "mobile": false
+  },
+  {
+    "n": 39,
+    "file": "39-doador-doacao-entregue-com-link-do-comprovante.png",
+    "group": "Doador",
+    "title": "Doacao entregue com link do comprovante",
+    "mobile": false
+  },
+  {
+    "n": 40,
+    "file": "40-doador-comprovante-de-doacao.png",
+    "group": "Doador",
+    "title": "Comprovante de doacao",
+    "mobile": false
+  },
+  {
+    "n": 41,
+    "file": "41-doador-notificacoes-sino.png",
+    "group": "Doador",
+    "title": "Notificacoes (sino)",
+    "mobile": false
+  },
+  {
+    "n": 42,
+    "file": "42-administrador-relatorios-e-indicadores.png",
+    "group": "Administrador",
+    "title": "Relatorios e indicadores",
+    "mobile": false
+  },
+  {
+    "n": 43,
+    "file": "43-administrador-dashboard-apos-o-fluxo-completo.png",
+    "group": "Administrador",
+    "title": "Dashboard apos o fluxo completo",
+    "mobile": false
+  },
+  {
+    "n": 44,
+    "file": "44-celular-pagina-inicial.png",
+    "group": "Celular",
+    "title": "Pagina inicial",
+    "mobile": true
+  },
+  {
+    "n": 45,
+    "file": "45-celular-login.png",
+    "group": "Celular",
+    "title": "Login",
+    "mobile": true
+  },
+  {
+    "n": 46,
+    "file": "46-celular-dashboard-do-administrador.png",
+    "group": "Celular",
+    "title": "Dashboard do administrador",
+    "mobile": true
+  },
+  {
+    "n": 47,
+    "file": "47-celular-menu-lateral.png",
+    "group": "Celular",
+    "title": "Menu lateral",
+    "mobile": true
+  },
+  {
+    "n": 48,
+    "file": "48-celular-doacoes.png",
+    "group": "Celular",
+    "title": "Doacoes",
+    "mobile": true
+  },
+  {
+    "n": 49,
+    "file": "49-celular-detalhe-da-rota.png",
+    "group": "Celular",
+    "title": "Detalhe da rota",
+    "mobile": true
+  },
+  {
+    "n": 50,
+    "file": "50-celular-oportunidades-do-receptor.png",
+    "group": "Celular",
+    "title": "Oportunidades do receptor (sem doacoes disponiveis no momento)",
+    "mobile": true
+  }
+]

@@ -176,7 +176,7 @@ function footer(label) {
 }
 
 module.exports = {
-  headings,
+  headings, ImageRun,
   fs, path, Document, Packer, Paragraph, TextRun, AlignmentType, TableOfContents, Footer, Header,
   P, PN, H1, H2, H3, bullet, pageBreak, caption, table, kv, img, spacer, runs, cell,
   styles, numbering, footer, PAGE, CONTENT_W, FONT, GREEN, DARK, GRAY, LIGHT, WidthType, Table, TableRow, TableCell,

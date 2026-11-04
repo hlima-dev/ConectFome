@@ -43,10 +43,21 @@ const docs = [
   ['D3', 'Incorporar os resultados reais de R1, R2 e R3 (citações das entrevistas, notas SUS, SAM real), sem inventar nada além do que foi coletado.', 'Seções 10 e 13; artigo 4 e 5', 'João', 4],
   ['D4', 'Exportar PDF final de ambos, conferir sumário, figuras e referências e entregar.', 'Entrega', 'João', 1],
 ]
+
+const situacao = {
+  C0: 'Feito e verificado em banco real', C1: 'Feito', C2: 'Feito', C3: 'Feito', C4: 'Feito (reserva simultânea testada em banco real)', C5: 'Feito',
+  C6: 'Feito. Testado com servidor HTTP simulado; não foi possível testar contra o Nominatim real',
+  C7: 'Feito. Mapa verificado no navegador; o fundo do mapa depende de internet', C8: 'Feito', C9: 'Feito', C10: 'Feito (exporta CSV; PDF não)',
+  C11a: 'Feito', C11b: 'Feito (inclui a API pela rede e a matriz de permissões)', C11c: 'Feito', C12: 'Feito',
+  C13: 'Parcial: configuração e caminho de produção validados localmente; a publicação precisa das contas da equipe (DEPLOY.md)',
+  C14: 'Feito',
+  R1: 'Pendente (equipe)', R2: 'Pendente (equipe)', R3: 'Pendente (equipe)', R4: 'Pendente (equipe)', R5: 'Pendente (equipe)', R6: 'Pendente (equipe)', R7: 'Pendente (equipe)', R8: 'Pendente (equipe)',
+  D1: 'Feito (números vêm do código)', D2: 'Feito: roteiro ponta a ponta com 49 telas; RFs conferidos', D3: 'Pendente: depende de R1 a R3', D4: 'Pendente: depois de R1 a R8',
+}
 const sum = (a) => a.reduce((n, r) => n + r[4], 0)
 const nb = (t) => t.replace(/`/g, '')
-const rows = (a) => a.map((r) => [r[0], nb(r[1]), r[2], r[3], String(r[4])])
-const W = [650, 4650, 1650, 1250, 871]
+const rows = (a) => a.map((r) => [r[0], nb(r[1]), r[2], r[3], String(r[4]), situacao[r[0]] ?? ''])
+const W = [560, 3650, 1300, 1000, 600, 1961]
 
 const head = [
   center('PLANO DE FECHAMENTO DO PROJETO', { bold: true, size: 32, color: GREEN, after: 60 }),
@@ -54,10 +65,10 @@ const head = [
 ]
 
 const intro = [
-  H1('1. Objetivo e regra de uso'),
-  P('A documentação e o artigo descrevem o ConectFome como um produto finalizado, com três personas, painel de oportunidades, notificações, histórico de ações, mapa de rotas, comprovantes e relatórios ampliados. **Hoje, parte disso ainda não existe no código.** Este plano lista tudo o que precisa ser feito para que cada frase dos documentos seja verdadeira.'),
-  P('**Regra:** os documentos só devem ser entregues depois de cumprir a “definição de pronto” da Seção 7. Se algum item ficar de fora, o texto correspondente deve ser removido (coluna “Onde aparece”), em vez de entregar uma funcionalidade descrita e inexistente. Um avaliador que abrir o sistema e não encontrar o que o documento promete vai tratar isso como erro de integridade, e não como atraso.'),
-  P('As horas são **estimativas minhas**, para dimensionar e ordenar; ajustem com a realidade da equipe. Os responsáveis seguem as funções descritas na Seção 7 da documentação de projeto (João: requisitos e gestão; Lucas: back-end e banco; Vitor: front-end e testes).'),
+  H1('1. Objetivo e situação'),
+  P('Este plano lista tudo o que era preciso para que cada frase da documentação e do artigo fosse verdadeira, e a **situação** de cada item. Todo o bloco de **código (C0 a C14) foi executado**, com a ressalva do C13 (publicação, que depende das contas da equipe). O que resta é o que **só a equipe pode fazer**: entrevistas, teste de usabilidade, contagem real de estabelecimentos, conferência das fontes e a publicação.'),
+  P('**Regra que continua valendo:** os documentos só devem ser entregues quando os itens pendentes de pesquisa estiverem feitos ou quando o texto for ajustado ao que de fato foi feito. Em particular, não afirmem em nenhum lugar que houve entrevistas, teste de usabilidade ou piloto se eles não aconteceram.'),
+  P('As horas são **estimativas minhas** do plano original. Os responsáveis seguem as funções da Seção 7 da documentação de projeto (Lucas: back-end e banco; Vitor: front-end e testes; João: requisitos e gestão).'),
   H1('2. Estado atual medido'),
   table(
     ['Item', `Valor em ${M.generatedAt}`],
@@ -75,21 +86,18 @@ const intro = [
 
 const sec = (titulo, arr) => [
   H1(titulo),
-  table(['ID', 'Entrega e critério de aceite', 'Onde aparece', 'Quem', 'Horas'], rows(arr), W, { size: 18 }),
+  table(['ID', 'Entrega e critério de aceite', 'Onde aparece', 'Quem', 'Horas', 'Situação'], rows(arr), W, { size: 16 }),
   PN(`Subtotal: **${sum(arr)} h**`, { before: 100, size: 22 }),
 ]
 
 const total = sum(codigo) + sum(pesquisa) + sum(docs)
 const ordem = [
-  H1('7. Ordem de execução e definição de pronto'),
-  H2('Ordem sugerida'),
-  bullet('**Desde o primeiro dia, em paralelo:** R1 (entrevistas), R3, R4, R5, R7 e R8, que não dependem de código. As entrevistas vêm antes do resto do desenvolvimento porque podem mudar prioridades.'),
-  bullet('**Bloco 1 – base:** C0, C1, C2, C14.'),
-  bullet('**Bloco 2 – fluxo do receptor:** C3, C4, C5.'),
-  bullet('**Bloco 3 – logística:** C6, C7, C8.'),
-  bullet('**Bloco 4 – entregáveis do doador e do admin:** C9, C10, C12.'),
-  bullet('**Bloco 5 – qualidade e publicação:** C11a, C11b, C11c, C13.'),
-  bullet('**Bloco 6 – validação e fechamento:** R2 (teste de usabilidade com o sistema estável), R6, D1 a D4.'),
+  H1('7. O que falta e definição de pronto'),
+  H2('O que falta (só a equipe)'),
+  bullet('**Já, em paralelo:** R1 (entrevistas), R3, R4, R5, R7 e R8. Não dependem de código e as entrevistas podem mudar o que vale mostrar.'),
+  bullet('**Publicar** (C13) seguindo o DEPLOY.md e rodar scripts/smoke.sh; colocar o endereço na Seção 1 da documentação.'),
+  bullet('**R2** (teste de usabilidade) com o sistema estável, que já está.'),
+  bullet('**R6** (Figma e Trello) e **D3/D4** (incorporar os resultados reais e exportar os PDFs finais).'),
   H2('Definição de pronto'),
   bullet('Os 21 requisitos funcionais da Seção 8.2 podem ser demonstrados no sistema em execução.'),
   bullet('npm test passa no backend e no frontend, o CI está verde e npm run build compila.'),

@@ -14,6 +14,7 @@ import {
   type DonationStatus,
 } from '../../types/donations'
 import { DonationFormModal } from './DonationFormModal'
+import { formatKg } from '../../utils/format'
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -39,7 +40,7 @@ export function DonationsPage() {
     { header: 'Categoria', cell: (d) => FOOD_CATEGORY_LABELS[d.category] },
     { header: 'Doador', cell: (d) => d.donor?.name ?? '—' },
     { header: 'Receptor', cell: (d) => d.recipient?.name ?? '—' },
-    { header: 'Qtd. estimada', cell: (d) => `${d.estimatedQuantityKg} kg` },
+    { header: 'Qtd. estimada', cell: (d) => formatKg(d.estimatedQuantityKg) },
     { header: 'Janela de coleta', cell: (d) => formatDate(d.pickupWindowStart) },
     {
       header: 'Status',

@@ -14,12 +14,13 @@ import { downloadDonationsCsv } from '../../services/reports'
 import { getErrorMessage } from '../../utils/errors'
 import { useDonors } from '../../hooks/useDonors'
 import { useRecipients } from '../../hooks/useRecipients'
+import { formatKg } from '../../utils/format'
 
 const currentYear = new Date().getFullYear()
 const YEAR_OPTIONS = [currentYear, currentYear - 1, currentYear - 2]
 
 const percent = (value: number | null) => (value === null ? '—' : `${(value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`)
-const kg = (value: number) => `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg`
+const kg = formatKg
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -209,7 +210,7 @@ export function ReportsPage() {
                   label={{ value: 'kg', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 12 }}
                 />
                 <Tooltip
-                  formatter={(value: number, name) => [name === 'totalKg' ? `${value} kg` : value, name === 'totalKg' ? 'Total resgatado' : 'Doações']}
+                  formatter={(value: number, name) => [name === 'totalKg' ? formatKg(value) : value, name === 'totalKg' ? 'Total resgatado' : 'Doações']}
                   labelFormatter={(label) => `Mês: ${label}`}
                   contentStyle={{ borderRadius: 8, borderColor: '#e2e8f0', fontSize: 13 }}
                 />
@@ -241,7 +242,7 @@ export function ReportsPage() {
                   <tr key={row.donorId}>
                     <td className="py-2">{row.donorName}</td>
                     <td className="py-2 text-right">{row.donationCount}</td>
-                    <td className="py-2 text-right font-medium">{row.totalKg} kg</td>
+                    <td className="py-2 text-right font-medium">{formatKg(row.totalKg)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -269,7 +270,7 @@ export function ReportsPage() {
                   <tr key={row.recipientId}>
                     <td className="py-2">{row.recipientName}</td>
                     <td className="py-2 text-right">{row.donationCount}</td>
-                    <td className="py-2 text-right font-medium">{row.totalKg} kg</td>
+                    <td className="py-2 text-right font-medium">{formatKg(row.totalKg)}</td>
                   </tr>
                 ))}
               </tbody>

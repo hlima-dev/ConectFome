@@ -123,7 +123,7 @@ describe('PickupRouteDetailPage', () => {
       isLoading: false,
     })
     renderPage()
-    expect(screen.getByText('8.5 kg')).toBeInTheDocument()
+    expect(screen.getByText('8,5 kg')).toBeInTheDocument()
     expect(screen.queryByLabelText(/Kg coletado de/)).not.toBeInTheDocument()
   })
 })

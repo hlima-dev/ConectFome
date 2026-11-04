@@ -11,6 +11,10 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
+  // Limites de requisições por IP a cada 15 min. Os padrões valem em produção; só
+  // aumente em ambiente de teste/captura (ex.: scripts/capturar-telas.cjs).
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
   APP_URL: z.string().url().default('http://localhost:5173'),
   // Geocodificação (endereço -> latitude/longitude) via Nominatim/OpenStreetMap.
   // Desligada nos testes. O serviço público limita a 1 requisição por segundo e

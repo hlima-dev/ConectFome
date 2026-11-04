@@ -19,6 +19,7 @@ import { useRecipients } from '../../hooks/useRecipients'
 import { getStoredUser } from '../../services/auth'
 import { getErrorMessage } from '../../utils/errors'
 import { DonationTimeline } from './DonationTimeline'
+import { formatKg } from '../../utils/format'
 import {
   DONATION_STATUS_LABELS,
   DONATION_STATUS_TONES,
@@ -222,12 +223,12 @@ export function DonationDetailPage() {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Quantidade estimada</p>
-          <p className="text-sm text-slate-800">{donation.estimatedQuantityKg} kg</p>
+          <p className="text-sm text-slate-800">{formatKg(donation.estimatedQuantityKg)}</p>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Quantidade coletada</p>
           <p className="text-sm text-slate-800">
-            {donation.collectedQuantityKg ? `${donation.collectedQuantityKg} kg` : '—'}
+            {formatKg(donation.collectedQuantityKg)}
           </p>
         </div>
         <div>

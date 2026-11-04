@@ -28,6 +28,18 @@ out.enums = (fs.readFileSync(path.join(root, 'backend/prisma/schema.prisma'), 'u
 out.backendLoc = lines(files('backend/src', /\.ts$/))
 out.frontendLoc = lines(files('frontend/src', /\.tsx?$/))
 out.frontendPages = files('frontend/src/pages', /Page\.tsx$|Dashboard\.tsx$|Login\.tsx$|Register\.tsx$/).length
+// Testes de integração (PostgreSQL real): só medidos se INTEGRATION_DATABASE_URL
+// estiver definido; senão mantém o valor da última medição.
+const metricsFile = path.join(__dirname, 'metrics.json')
+const previous = fs.existsSync(metricsFile) ? JSON.parse(fs.readFileSync(metricsFile, 'utf8')) : {}
+out.integrationTests = previous.integrationTests ?? null
+if (process.env.INTEGRATION_DATABASE_URL) {
+  const it = JSON.parse(
+    sh('npx vitest run --config vitest.integration.config.mts --reporter=json 2>/dev/null', path.join(root, 'backend')).replace(/^[^{]*/, ''),
+  )
+  out.integrationTests = it.numTotalTests
+  out.integrationTestsPassed = it.numPassedTests
+}
 const feReport = JSON.parse(
   sh('npx vitest run --reporter=json 2>/dev/null', path.join(root, 'frontend')).replace(/^[^{]*/, ''),
 )

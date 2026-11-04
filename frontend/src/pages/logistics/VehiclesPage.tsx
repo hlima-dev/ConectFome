@@ -7,6 +7,7 @@ import { useDeactivateVehicle, useVehicles } from '../../hooks/useVehicles'
 import type { Vehicle } from '../../types/logistics'
 import { VehicleFormModal } from './VehicleFormModal'
 import { getErrorMessage } from '../../utils/errors'
+import { formatKg } from '../../utils/format'
 
 export function VehiclesPage() {
   const [includeInactive, setIncludeInactive] = useState(false)
@@ -32,7 +33,7 @@ export function VehiclesPage() {
   const columns: DataTableColumn<Vehicle>[] = [
     { header: 'Placa', cell: (v) => <span className="font-medium text-slate-900">{v.plate}</span> },
     { header: 'Modelo', cell: (v) => v.model },
-    { header: 'Capacidade', cell: (v) => (v.capacityKg ? `${v.capacityKg} kg` : '—') },
+    { header: 'Capacidade', cell: (v) => formatKg(v.capacityKg) },
     {
       header: 'Status',
       cell: (v) => <StatusBadge label={v.active ? 'Ativo' : 'Inativo'} tone={v.active ? 'green' : 'neutral'} />,
