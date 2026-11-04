@@ -1,4 +1,4 @@
-# 🍎 ConectFome
+# 🍎 ConectaFome
 
 Plataforma de doação e resgate de alimentos que conecta **doadores**
 (mercados, restaurantes, feiras) a **receptores** (ONGs e famílias em
